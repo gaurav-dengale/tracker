@@ -53,14 +53,16 @@ export default function Dashboard() {
         getSubjectProgress(),
         getSchedule(),
       ]);
-      setTodayTasks(todayTasksRes.data);
-      setAllTasks(allTasksRes.data);
-      setDsa(dsaRes.data);
-      setSubjects(subjectsRes.data);
-      setSchedule(scheduleRes.data);
+      setTodayTasks(todayTasksRes?.data || []);
+      setAllTasks(allTasksRes?.data || []);
+      setDsa(dsaRes?.data || null);
+      setSubjects(subjectsRes?.data || []);
+      setSchedule(scheduleRes?.data || []);
 
-      const current = getActiveScheduleItem(scheduleRes.data);
-      setActiveSlot(current);
+      if (scheduleRes?.data && scheduleRes.data.length > 0) {
+        const current = getActiveScheduleItem(scheduleRes.data);
+        setActiveSlot(current);
+      }
     } catch (err) {
       console.error('Error loading dashboard', err);
     } finally {
@@ -71,7 +73,7 @@ export default function Dashboard() {
   useEffect(() => {
     loadData();
     const interval = setInterval(() => {
-      if (schedule.length) {
+      if (schedule && schedule.length > 0) {
         setActiveSlot(getActiveScheduleItem(schedule));
       }
     }, 60000);
@@ -82,7 +84,9 @@ export default function Dashboard() {
     setGenerating(true);
     try {
       const res = await generateTasksFromSchedule(today);
-      setTodayTasks(res.data);
+      setTodayTasks(res?.data || []);
+      const allRes = await getTasks();
+      setAllTasks(allRes?.data || []);
     } catch (err) {
       console.error('Error generating tasks', err);
     } finally {
@@ -90,10 +94,13 @@ export default function Dashboard() {
     }
   };
 
-  const completedCount = todayTasks.filter((t) => t.completed).length;
-  const totalCount = todayTasks.length;
+  const completedCount = (todayTasks || []).filter((t) => t?.completed).length;
+  const totalCount = (todayTasks || []).length;
   const completionPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-  const streak = calculateStreak(allTasks);
+  
+  const streakData = calculateStreak(allTasks || []);
+  const currentStreak = streakData?.currentStreak || 0;
+  const longestStreak = streakData?.longestStreak || 0;
 
   useEffect(() => {
     if (totalCount > 0 && completedCount === totalCount && !celebrated) {
@@ -111,7 +118,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-5xl mx-auto">
       {/* Header with Title & Streak */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -123,8 +130,12 @@ export default function Dashboard() {
         <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400">
           <Flame className="w-5 h-5 fill-orange-500 text-orange-500 animate-pulse" />
           <div className="text-right">
-            <span className="text-sm font-bold block leading-none">{streak} Day{streak === 1 ? '' : 's'}</span>
-            <span className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium">Streak</span>
+            <span className="text-sm font-bold block leading-none">
+              {currentStreak} Day{currentStreak === 1 ? '' : 's'}
+            </span>
+            <span className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium">
+              Streak (Best: {longestStreak}d)
+            </span>
           </div>
         </div>
       </div>
@@ -236,7 +247,7 @@ export default function Dashboard() {
       </div>
 
       {/* Study Consistency Heatmap (GitHub Style) */}
-      <StudyHeatmap tasks={allTasks} />
+      <StudyHeatmap tasks={allTasks || []} />
 
       {/* Today's Checklist */}
       <div className="card p-5">
@@ -247,7 +258,7 @@ export default function Dashboard() {
           </Link>
         </div>
 
-        {todayTasks.length === 0 ? (
+        {(todayTasks || []).length === 0 ? (
           <div className="text-center py-8 space-y-3">
             <p className="text-gray-400 text-sm">No tasks added for today yet.</p>
             <div className="flex items-center justify-center gap-3">
@@ -305,9 +316,9 @@ export default function Dashboard() {
       {/* Gamification Badges & Level */}
       <AchievementBadges
         stats={{
-          streak: streakData.currentStreak,
+          streak: currentStreak,
           dsaHours: dsa?.completedHours || 0,
-          completedTasksCount: allTasks.filter((t) => t.completed).length,
+          completedTasksCount: (allTasks || []).filter((t) => t?.completed).length,
         }}
       />
 
@@ -326,7 +337,7 @@ export default function Dashboard() {
           </Link>
         </div>
         <div className="space-y-3">
-          {subjects.map((s) => (
+          {(subjects || []).map((s) => (
             <div key={s.id}>
               <div className="flex justify-between text-sm mb-1">
                 <span className="text-gray-700 dark:text-gray-300 font-medium">{s.subject}</span>
