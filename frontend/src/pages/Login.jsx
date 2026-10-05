@@ -28,9 +28,11 @@ export default function Login() {
       <div className="w-full max-w-md">
         {/* Brand Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex w-14 h-14 rounded-2xl bg-gradient-to-tr from-primary-600 to-indigo-500 items-center justify-center shadow-lg shadow-primary-500/20 mb-4">
-            <GraduationCap className="w-8 h-8 text-white" />
-          </div>
+          <img
+            src="/icon-512.png"
+            alt="TCS NQT App Logo"
+            className="w-16 h-16 rounded-2xl mx-auto shadow-2xl shadow-primary-500/30 mb-4 object-cover ring-2 ring-primary-500/40"
+          />
           <h1 className="text-2xl font-bold tracking-tight text-white">TCS NQT Study Tracker</h1>
           <p className="text-sm text-gray-400 mt-1">Target Exam: March 2027</p>
         </div>

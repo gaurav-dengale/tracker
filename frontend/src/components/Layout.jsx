@@ -53,13 +53,15 @@ export default function Layout({ children, darkMode, setDarkMode }) {
         }`}
       >
         {/* Logo */}
-        <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-200 dark:border-gray-800">
-          <div className="w-9 h-9 rounded-lg bg-primary-600 flex items-center justify-center">
-            <GraduationCap className="w-5 h-5 text-white" />
-          </div>
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-200 dark:border-gray-800">
+          <img
+            src="/icon-192.png"
+            alt="TCS NQT Icon"
+            className="w-9 h-9 rounded-xl shadow-md shadow-primary-500/20 object-cover"
+          />
           <div>
-            <p className="font-bold text-sm text-gray-900 dark:text-white">TCS NQT</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Study Tracker</p>
+            <p className="font-bold text-sm text-gray-900 dark:text-white leading-tight">TCS NQT</p>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">Study Tracker</p>
           </div>
           <button
             className="ml-auto lg:hidden text-gray-500"
