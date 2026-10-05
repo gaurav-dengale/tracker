@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getTasksByRange } from '../api';
+import { getLocalDateString } from '../lib/dateUtils';
 import ProgressBar from '../components/ProgressBar';
 
 function getWeekDates() {
@@ -21,8 +22,8 @@ export default function WeeklyProgress() {
   const [loading, setLoading] = useState(true);
 
   const weekDates = getWeekDates();
-  const start = weekDates[0].toISOString().slice(0, 10);
-  const end = weekDates[6].toISOString().slice(0, 10);
+  const start = getLocalDateString(weekDates[0]);
+  const end = getLocalDateString(weekDates[6]);
 
   useEffect(() => {
     getTasksByRange(start, end)
@@ -39,10 +40,10 @@ export default function WeeklyProgress() {
       .finally(() => setLoading(false));
   }, [start, end]);
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getLocalDateString();
 
   const weekStats = weekDates.map((date, i) => {
-    const dateStr = date.toISOString().slice(0, 10);
+    const dateStr = getLocalDateString(date);
     const tasks = weekTasks[dateStr] || [];
     const total = tasks.length;
     const completed = tasks.filter((t) => t.completed).length;

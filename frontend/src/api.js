@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from './lib/supabaseClient';
+import { getLocalDateString } from './lib/dateUtils';
 
 // Helper to format task row from DB
 function formatTask(row) {
@@ -252,7 +253,7 @@ export const deleteTask = async (id) => {
 };
 
 export const generateTasksFromSchedule = async (date) => {
-  const targetDate = date || new Date().toISOString().slice(0, 10);
+  const targetDate = date || getLocalDateString();
   
   // Standard routine mapping
   const routineTasks = [

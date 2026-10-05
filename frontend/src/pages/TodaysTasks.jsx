@@ -1,15 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Pencil, Trash2, Check, Sparkles, RefreshCw } from 'lucide-react';
 import { getTasks, createTask, updateTask, toggleTask, deleteTask, generateTasksFromSchedule } from '../api';
+import { getLocalDateString, formatIndianDate } from '../lib/dateUtils';
 import TaskModal from '../components/TaskModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import ProgressBar from '../components/ProgressBar';
-
-function formatToday() {
-  return new Date().toLocaleDateString('en-IN', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-  });
-}
 
 const subjectColors = {
   'DSA / Striver': 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
@@ -27,7 +22,7 @@ export default function TodaysTasks() {
   const [showModal, setShowModal] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
+  const [selectedDate, setSelectedDate] = useState(getLocalDateString());
 
   const loadTasks = useCallback(async () => {
     setLoading(true);
@@ -93,7 +88,7 @@ export default function TodaysTasks() {
   const total = tasks.length;
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-  const isToday = selectedDate === new Date().toISOString().slice(0, 10);
+  const isToday = selectedDate === getLocalDateString();
 
   return (
     <div className="space-y-5 max-w-3xl mx-auto">
@@ -104,7 +99,7 @@ export default function TodaysTasks() {
             {isToday ? "Today's Tasks" : 'Tasks'}
           </h1>
           {isToday && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{formatToday()}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{formatIndianDate()}</p>
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2.5">

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { getLocalDateString } from '../lib/dateUtils';
 
 const SUBJECTS = [
   'DSA / Striver',
@@ -13,7 +14,7 @@ const SUBJECTS = [
 const defaultForm = {
   title: '',
   subject: SUBJECTS[0],
-  date: new Date().toISOString().slice(0, 10),
+  date: getLocalDateString(),
   plannedDuration: '',
   notes: '',
   completed: false,
@@ -27,7 +28,7 @@ export default function TaskModal({ task, onSave, onClose }) {
       setForm({
         title: task.title || '',
         subject: task.subject || SUBJECTS[0],
-        date: task.date || new Date().toISOString().slice(0, 10),
+        date: task.date || getLocalDateString(),
         plannedDuration: task.plannedDuration || '',
         notes: task.notes || '',
         completed: task.completed || false,

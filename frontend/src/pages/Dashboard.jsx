@@ -4,6 +4,7 @@ import {
   CalendarDays, CheckCircle2, Clock, TrendingUp, BookOpen, ChevronRight, Sparkles
 } from 'lucide-react';
 import { getTasks, getDsaProgress, getSubjectProgress, generateTasksFromSchedule } from '../api';
+import { getLocalDateString, formatIndianDate } from '../lib/dateUtils';
 import ProgressBar from '../components/ProgressBar';
 
 const EXAM_DATE = new Date('2027-03-01');
@@ -15,12 +16,6 @@ function getDaysRemaining() {
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 }
 
-function formatToday() {
-  return new Date().toLocaleDateString('en-IN', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-  });
-}
-
 export default function Dashboard() {
   const [todayTasks, setTodayTasks] = useState([]);
   const [dsa, setDsa] = useState(null);
@@ -28,7 +23,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getLocalDateString();
   const daysRemaining = getDaysRemaining();
 
   const loadData = async () => {
@@ -81,7 +76,7 @@ export default function Dashboard() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">TCS NQT Preparation</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{formatToday()}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{formatIndianDate()}</p>
       </div>
 
       {/* Stats row */}
