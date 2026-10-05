@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  CalendarDays, CheckCircle2, Clock, BookOpen, ChevronRight, Sparkles, Flame, Radio, Zap
+  CalendarDays, CheckCircle2, BookOpen, ChevronRight, Sparkles, Flame
 } from 'lucide-react';
 import { getTasks, getDsaProgress, getSubjectProgress, getSchedule, generateTasksFromSchedule } from '../api';
 import { getLocalDateString, formatIndianDate } from '../lib/dateUtils';
@@ -9,8 +9,17 @@ import { getActiveScheduleItem } from '../lib/timeUtils';
 import { calculateStreak } from '../lib/streakUtils';
 import { triggerCelebration } from '../lib/confetti';
 import ProgressBar from '../components/ProgressBar';
+import DailyExamTip from '../components/DailyExamTip';
+import PreparationMilestones from '../components/PreparationMilestones';
+import StudyResources from '../components/StudyResources';
 
 const EXAM_DATE = new Date('2027-03-01');
+
+const priorityConfig = {
+  HIGH: { label: 'High', color: 'bg-red-500/10 text-red-500 border-red-500/20' },
+  MEDIUM: { label: 'Med', color: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
+  LOW: { label: 'Quick', color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
+};
 
 function getDaysRemaining() {
   const today = new Date();
@@ -59,7 +68,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadData();
-    // Update active routine slot every minute
     const interval = setInterval(() => {
       if (schedule.length) {
         setActiveSlot(getActiveScheduleItem(schedule));
@@ -85,7 +93,6 @@ export default function Dashboard() {
   const completionPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
   const streak = calculateStreak(allTasks);
 
-  // Trigger celebration once when 100% complete
   useEffect(() => {
     if (totalCount > 0 && completedCount === totalCount && !celebrated) {
       triggerCelebration();
@@ -120,6 +127,9 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Daily Exam Tip */}
+      <DailyExamTip />
+
       {/* Live Active Schedule Slot Banner */}
       {activeSlot && (
         <div className="card p-4 bg-gradient-to-r from-blue-900/20 via-indigo-900/20 to-purple-900/20 border-primary-500/30 border flex flex-wrap items-center justify-between gap-3 shadow-lg shadow-primary-950/20">
@@ -130,7 +140,7 @@ export default function Dashboard() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-green-600 dark:text-green-400">Active Now</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-green-600 dark:text-green-400">Active Routine Slot</span>
                 <span className="text-xs text-gray-500 dark:text-gray-400">({activeSlot.timeSlot})</span>
               </div>
               <p className="text-base font-bold text-gray-900 dark:text-white mt-0.5">
@@ -226,43 +236,55 @@ export default function Dashboard() {
             </div>
           </div>
         ) : (
-          <ul className="space-y-2">
-            {todayTasks.map((task) => (
-              <li
-                key={task.id}
-                className={`flex items-center gap-3 p-3 rounded-lg ${
-                  task.completed
-                    ? 'bg-green-50 dark:bg-green-900/10'
-                    : 'bg-gray-50 dark:bg-gray-800'
-                }`}
-              >
-                <div
-                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+          <ul className="space-y-2.5">
+            {todayTasks.map((task) => {
+              const pConfig = priorityConfig[task.priority] || priorityConfig.MEDIUM;
+              return (
+                <li
+                  key={task.id}
+                  className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
                     task.completed
-                      ? 'border-green-500 bg-green-500'
-                      : 'border-gray-400 dark:border-gray-600'
+                      ? 'bg-green-50/50 dark:bg-green-950/20 opacity-75'
+                      : 'bg-gray-50 dark:bg-gray-800/70 border border-transparent dark:border-gray-800'
                   }`}
                 >
-                  {task.completed && (
-                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                </div>
-                <span className={`text-sm flex-1 ${task.completed ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300'}`}>
-                  {task.title}
-                </span>
-                <span className="text-xs text-gray-400">{task.plannedDuration}</span>
-              </li>
-            ))}
+                  <div
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                      task.completed
+                        ? 'border-green-500 bg-green-500'
+                        : 'border-gray-400 dark:border-gray-600'
+                    }`}
+                  >
+                    {task.completed && (
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                  <span className={`text-sm flex-1 ${task.completed ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-200'}`}>
+                    {task.title}
+                  </span>
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${pConfig.color}`}>
+                    {pConfig.label}
+                  </span>
+                  <span className="text-xs text-gray-400">{task.plannedDuration}</span>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
 
+      {/* Preparation Roadmap Milestones */}
+      <PreparationMilestones />
+
+      {/* Quick Study Resources */}
+      <StudyResources />
+
       {/* Subject Progress */}
       <div className="card p-5">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-gray-900 dark:text-white">Subject Progress</h2>
+          <h2 className="font-semibold text-gray-900 dark:text-white">Subject Progress Overview</h2>
           <Link to="/subjects" className="text-sm text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1">
             Edit <ChevronRight className="w-4 h-4" />
           </Link>

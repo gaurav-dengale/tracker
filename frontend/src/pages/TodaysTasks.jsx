@@ -221,6 +221,15 @@ export default function TodaysTasks() {
                   <span className={`px-2 py-0.5 rounded-full font-medium ${subjectColors[task.subject] || 'bg-gray-100 text-gray-600'}`}>
                     {task.subject}
                   </span>
+                  <span className={`px-2 py-0.5 rounded-md font-semibold text-[10px] border ${
+                    task.priority === 'HIGH'
+                      ? 'bg-red-500/10 text-red-500 border-red-500/30'
+                      : task.priority === 'LOW'
+                      ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
+                      : 'bg-amber-500/10 text-amber-500 border-amber-500/30'
+                  }`}>
+                    {task.priority === 'HIGH' ? '🔴 High' : task.priority === 'LOW' ? '🟢 Low' : '🟡 Med'}
+                  </span>
                   {task.plannedDuration && (
                     <span>⏱ {task.plannedDuration}</span>
                   )}

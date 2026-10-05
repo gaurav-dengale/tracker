@@ -8,6 +8,7 @@ function formatTask(row) {
     id: row.id,
     title: row.title,
     subject: row.subject,
+    priority: row.priority || 'MEDIUM',
     date: row.date,
     plannedDuration: row.planned_duration,
     completed: row.completed,
