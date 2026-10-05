@@ -11,8 +11,11 @@ import {
   Sun,
   Menu,
   X,
-  GraduationCap
+  GraduationCap,
+  LogOut,
+  User as UserIcon
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -25,6 +28,7 @@ const navItems = [
 
 export default function Layout({ children, darkMode, setDarkMode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, signOut } = useAuth();
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -81,9 +85,33 @@ export default function Layout({ children, darkMode, setDarkMode }) {
           ))}
         </nav>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800">
-          <p className="text-xs text-gray-400 dark:text-gray-500">Exam: March 2027</p>
+        {/* User Profile & Footer */}
+        <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-800 space-y-2">
+          {user && (
+            <div className="flex items-center justify-between p-2 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-800">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-7 h-7 rounded-full bg-primary-600/20 text-primary-500 flex items-center justify-center flex-shrink-0 text-xs font-bold">
+                  {user.email ? user.email.slice(0, 2).toUpperCase() : <UserIcon className="w-3.5 h-3.5" />}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">
+                    {user.email}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={signOut}
+                title="Log Out"
+                className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+          <div className="px-2 pt-1 flex justify-between items-center text-[11px] text-gray-400 dark:text-gray-500">
+            <span>Exam: March 2027</span>
+            <span>v1.0</span>
+          </div>
         </div>
       </aside>
 
