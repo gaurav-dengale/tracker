@@ -1,14 +1,23 @@
 import { getLocalDateString } from './dateUtils';
 
 export function calculateStreak(tasks) {
-  if (!tasks || !tasks.length) return 0;
+  const data = getStreakData(tasks);
+  return data;
+}
+
+export function getStreakData(tasks = []) {
+  if (!tasks || !tasks.length) {
+    return { currentStreak: 0, longestStreak: 0, activeDays: 0 };
+  }
 
   // Get unique dates where at least one task was completed
   const completedDates = new Set(
-    tasks.filter((t) => t.completed).map((t) => t.date)
+    tasks.filter((t) => t.completed && t.date).map((t) => t.date)
   );
 
-  if (completedDates.size === 0) return 0;
+  if (completedDates.size === 0) {
+    return { currentStreak: 0, longestStreak: 0, activeDays: 0 };
+  }
 
   let streak = 0;
   const today = new Date();
@@ -31,5 +40,34 @@ export function calculateStreak(tasks) {
     }
   }
 
-  return streak;
+  // Calculate longest streak by sorting unique dates
+  const sortedDates = Array.from(completedDates).sort();
+  let maxStreak = 0;
+  let running = 0;
+  let lastDateObj = null;
+
+  for (const dateStr of sortedDates) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const curDate = new Date(y, m - 1, d);
+    if (lastDateObj) {
+      const diffDays = Math.round((curDate - lastDateObj) / (1000 * 60 * 60 * 24));
+      if (diffDays === 1) {
+        running += 1;
+      } else {
+        running = 1;
+      }
+    } else {
+      running = 1;
+    }
+    lastDateObj = curDate;
+    if (running > maxStreak) {
+      maxStreak = running;
+    }
+  }
+
+  return {
+    currentStreak: streak,
+    longestStreak: Math.max(streak, maxStreak),
+    activeDays: completedDates.size,
+  };
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  CalendarDays, CheckCircle2, BookOpen, ChevronRight, Sparkles, Flame
+  CalendarDays, CheckCircle2, BookOpen, ChevronRight, Sparkles, Flame, Zap, ArrowRight
 } from 'lucide-react';
 import { getTasks, getDsaProgress, getSubjectProgress, getSchedule, generateTasksFromSchedule } from '../api';
 import { getLocalDateString, formatIndianDate } from '../lib/dateUtils';
@@ -12,6 +12,8 @@ import ProgressBar from '../components/ProgressBar';
 import DailyExamTip from '../components/DailyExamTip';
 import PreparationMilestones from '../components/PreparationMilestones';
 import StudyResources from '../components/StudyResources';
+import StudyHeatmap from '../components/StudyHeatmap';
+import AchievementBadges from '../components/AchievementBadges';
 
 const EXAM_DATE = new Date('2027-01-01');
 
@@ -211,6 +213,31 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Practice & Quiz Arena Feature Spotlight Banner */}
+      <div className="rounded-2xl bg-gradient-to-r from-indigo-900/80 via-purple-900/80 to-pink-900/80 border border-purple-500/30 p-5 text-white flex flex-wrap items-center justify-between gap-4 shadow-lg">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded-md bg-amber-400/20 text-amber-300 font-bold text-xs border border-amber-400/30">
+              ⚡ Practice Arena
+            </span>
+            <span className="text-xs text-purple-200">Quant · Reasoning · Verbal · Coding</span>
+          </div>
+          <h2 className="text-lg font-bold">Ready for a quick 5-min TCS NQT Sprint?</h2>
+          <p className="text-xs text-purple-200 max-w-xl">
+            Test yourself with authentic TCS NQT questions, step-by-step mathematical shortcuts, and earn XP.
+          </p>
+        </div>
+        <Link
+          to="/quiz"
+          className="btn-primary py-2.5 px-4 bg-white text-purple-900 hover:bg-purple-50 font-bold text-xs flex items-center gap-2 shadow-md"
+        >
+          <Zap className="w-4 h-4 text-purple-600 fill-purple-600" /> Start Practice Quiz <ArrowRight className="w-4 h-4" />
+        </Link>
+      </div>
+
+      {/* Study Consistency Heatmap (GitHub Style) */}
+      <StudyHeatmap tasks={allTasks} />
+
       {/* Today's Checklist */}
       <div className="card p-5">
         <div className="flex items-center justify-between mb-4">
@@ -274,6 +301,15 @@ export default function Dashboard() {
           </ul>
         )}
       </div>
+
+      {/* Gamification Badges & Level */}
+      <AchievementBadges
+        stats={{
+          streak: streakData.currentStreak,
+          dsaHours: dsa?.completedHours || 0,
+          completedTasksCount: allTasks.filter((t) => t.completed).length,
+        }}
+      />
 
       {/* Preparation Roadmap Milestones */}
       <PreparationMilestones />

@@ -9,6 +9,7 @@ import Schedule from './pages/Schedule';
 import DsaTracker from './pages/DsaTracker';
 import Subjects from './pages/Subjects';
 import WeeklyProgress from './pages/WeeklyProgress';
+import PracticeQuiz from './pages/PracticeQuiz';
 
 function AppContent({ darkMode, setDarkMode }) {
   const { user, loading, isSupabaseConfigured } = useAuth();
@@ -35,6 +36,7 @@ function AppContent({ darkMode, setDarkMode }) {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/tasks" element={<TodaysTasks />} />
+          <Route path="/quiz" element={<PracticeQuiz />} />
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/dsa" element={<DsaTracker />} />
           <Route path="/subjects" element={<Subjects />} />

@@ -15,7 +15,8 @@ import {
   LogOut,
   User as UserIcon,
   Timer,
-  BookMarked
+  BookMarked,
+  Zap
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import PomodoroTimer from './PomodoroTimer';
@@ -24,6 +25,7 @@ import Scratchpad from './Scratchpad';
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/tasks', label: "Today's Tasks", icon: CheckSquare },
+  { to: '/quiz', label: 'Practice & Quiz', icon: Zap },
   { to: '/schedule', label: 'Schedule', icon: Clock },
   { to: '/dsa', label: 'DSA Tracker', icon: BookOpen },
   { to: '/subjects', label: 'Subjects', icon: BarChart2 },
