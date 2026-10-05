@@ -13,9 +13,13 @@ import {
   X,
   GraduationCap,
   LogOut,
-  User as UserIcon
+  User as UserIcon,
+  Timer,
+  BookMarked
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import PomodoroTimer from './PomodoroTimer';
+import Scratchpad from './Scratchpad';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -28,6 +32,8 @@ const navItems = [
 
 export default function Layout({ children, darkMode, setDarkMode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [pomodoroOpen, setPomodoroOpen] = useState(false);
+  const [scratchpadOpen, setScratchpadOpen] = useState(false);
   const { user, signOut } = useAuth();
 
   return (
@@ -74,7 +80,7 @@ export default function Layout({ children, darkMode, setDarkMode }) {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
                   isActive
-                    ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+                    ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 font-semibold'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'
                 }`
               }
@@ -118,20 +124,42 @@ export default function Layout({ children, darkMode, setDarkMode }) {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Topbar */}
-        <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center gap-3">
+        <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center gap-2 sm:gap-3">
           <button
-            className="lg:hidden text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            className="lg:hidden text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 mr-1"
             onClick={() => setSidebarOpen(true)}
           >
             <Menu className="w-5 h-5" />
           </button>
+
           <div className="flex-1" />
+
+          {/* Quick Focus Pomodoro Timer Button */}
+          <button
+            onClick={() => setPomodoroOpen(true)}
+            className="px-3 py-1.5 rounded-xl bg-primary-50 hover:bg-primary-100 dark:bg-primary-950/50 dark:hover:bg-primary-900/40 border border-primary-200 dark:border-primary-800/60 text-primary-700 dark:text-primary-300 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+            title="Open Focus Timer"
+          >
+            <Timer className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+            <span className="hidden sm:inline">Focus Timer</span>
+          </button>
+
+          {/* Quick Formulas Scratchpad Button */}
+          <button
+            onClick={() => setScratchpadOpen(true)}
+            className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors"
+            title="Formulas & Notes Scratchpad"
+          >
+            <BookMarked className="w-4 h-4" />
+          </button>
+
+          {/* Dark / Light Toggle */}
           <button
             onClick={() => setDarkMode(!darkMode)}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors"
+            className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors"
             title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
           >
-            {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
         </header>
 
@@ -140,6 +168,10 @@ export default function Layout({ children, darkMode, setDarkMode }) {
           {children}
         </main>
       </div>
+
+      {/* Global Overlays */}
+      <PomodoroTimer isOpen={pomodoroOpen} onClose={() => setPomodoroOpen(false)} />
+      <Scratchpad isOpen={scratchpadOpen} onClose={() => setScratchpadOpen(false)} />
     </div>
   );
 }

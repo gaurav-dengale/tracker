@@ -1,0 +1,17 @@
+{
+  "name": "TCS NQT Study Tracker",
+  "short_name": "NQT Tracker",
+  "description": "Personal exam preparation dashboard for TCS NQT March 2027",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#030712",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

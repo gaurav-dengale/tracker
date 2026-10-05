@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Plus, Pencil, Trash2, Check, Sparkles, RefreshCw } from 'lucide-react';
 import { getTasks, createTask, updateTask, toggleTask, deleteTask, generateTasksFromSchedule } from '../api';
 import { getLocalDateString, formatIndianDate } from '../lib/dateUtils';
+import { triggerCelebration } from '../lib/confetti';
 import TaskModal from '../components/TaskModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import ProgressBar from '../components/ProgressBar';
@@ -68,7 +69,14 @@ export default function TodaysTasks() {
   const handleToggle = async (id) => {
     try {
       const res = await toggleTask(id);
-      setTasks((prev) => prev.map((t) => (t.id === id ? res.data : t)));
+      setTasks((prev) => {
+        const next = prev.map((t) => (t.id === id ? res.data : t));
+        const allDone = next.length > 0 && next.every((t) => t.completed);
+        if (allDone) {
+          triggerCelebration();
+        }
+        return next;
+      });
     } catch (err) {
       console.error(err);
     }

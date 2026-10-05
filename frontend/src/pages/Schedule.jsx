@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, Save, X, Clock } from 'lucide-react';
+import { Plus, Pencil, Trash2, Save, X, Clock, Radio, Sparkles } from 'lucide-react';
 import {
   getSchedule, createScheduleItem, updateScheduleItem, deleteScheduleItem,
 } from '../api';
+import { isSlotActiveNow } from '../lib/timeUtils';
 import ConfirmDialog from '../components/ConfirmDialog';
 
 export default function Schedule() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ timeSlot: '', activity: '', sortOrder: 0 });
   const [addingNew, setAddingNew] = useState(false);
@@ -19,6 +21,9 @@ export default function Schedule() {
       .then((res) => setItems(res.data))
       .catch(console.error)
       .finally(() => setLoading(false));
+
+    const timer = setInterval(() => setCurrentTime(new Date()), 30000);
+    return () => clearInterval(timer);
   }, []);
 
   const startEdit = (item) => {
@@ -59,7 +64,7 @@ export default function Schedule() {
   };
 
   if (loading) {
-    return <div className="text-center py-16 text-gray-400 text-sm">Loading...</div>;
+    return <div className="text-center py-16 text-gray-400 text-sm">Loading schedule...</div>;
   }
 
   return (
@@ -115,78 +120,96 @@ export default function Schedule() {
       )}
 
       {/* Schedule list */}
-      <div className="card divide-y divide-gray-200 dark:divide-gray-800">
-        {items.map((item) => (
-          <div key={item.id} className="px-5 py-4">
-            {editingId === item.id ? (
-              /* Edit mode */
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
+      <div className="card divide-y divide-gray-200 dark:divide-gray-800 overflow-hidden">
+        {items.map((item) => {
+          const { isActive, minutesRemaining } = isSlotActiveNow(item.timeSlot, currentTime);
+          return (
+            <div
+              key={item.id}
+              className={`px-5 py-4 transition-colors ${
+                isActive
+                  ? 'bg-primary-50/70 dark:bg-primary-950/40 border-l-4 border-l-primary-500'
+                  : ''
+              }`}
+            >
+              {editingId === item.id ? (
+                /* Edit mode */
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <input
+                      className="input-field text-sm"
+                      value={editForm.timeSlot}
+                      onChange={(e) => setEditForm({ ...editForm, timeSlot: e.target.value })}
+                      placeholder="Time slot"
+                    />
+                    <input
+                      type="number"
+                      className="input-field text-sm"
+                      value={editForm.sortOrder}
+                      onChange={(e) => setEditForm({ ...editForm, sortOrder: parseInt(e.target.value) || 0 })}
+                      placeholder="Order"
+                    />
+                  </div>
                   <input
                     className="input-field text-sm"
-                    value={editForm.timeSlot}
-                    onChange={(e) => setEditForm({ ...editForm, timeSlot: e.target.value })}
-                    placeholder="Time slot"
+                    value={editForm.activity}
+                    onChange={(e) => setEditForm({ ...editForm, activity: e.target.value })}
+                    placeholder="Activity"
                   />
-                  <input
-                    type="number"
-                    className="input-field text-sm"
-                    value={editForm.sortOrder}
-                    onChange={(e) => setEditForm({ ...editForm, sortOrder: parseInt(e.target.value) || 0 })}
-                    placeholder="Order"
-                  />
+                  <div className="flex gap-2">
+                    <button
+                      className="btn-secondary text-xs py-1.5"
+                      onClick={() => setEditingId(null)}
+                    >
+                      <X className="w-3.5 h-3.5" /> Cancel
+                    </button>
+                    <button
+                      className="btn-primary text-xs py-1.5"
+                      onClick={() => saveEdit(item.id)}
+                    >
+                      <Save className="w-3.5 h-3.5" /> Save
+                    </button>
+                  </div>
                 </div>
-                <input
-                  className="input-field text-sm"
-                  value={editForm.activity}
-                  onChange={(e) => setEditForm({ ...editForm, activity: e.target.value })}
-                  placeholder="Activity"
-                />
-                <div className="flex gap-2">
-                  <button
-                    className="btn-secondary text-xs py-1.5"
-                    onClick={() => setEditingId(null)}
-                  >
-                    <X className="w-3.5 h-3.5" /> Cancel
-                  </button>
-                  <button
-                    className="btn-primary text-xs py-1.5"
-                    onClick={() => saveEdit(item.id)}
-                  >
-                    <Save className="w-3.5 h-3.5" /> Save
-                  </button>
+              ) : (
+                /* View mode */
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 flex-shrink-0 w-44">
+                    <Clock className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-primary-500 animate-pulse' : 'text-gray-400'}`} />
+                    <span className={`text-xs font-semibold ${isActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-700 dark:text-gray-300'}`}>
+                      {item.timeSlot}
+                    </span>
+                  </div>
+                  <div className="flex-1 flex flex-wrap items-center gap-2">
+                    <span className={`text-sm font-medium ${isActive ? 'text-primary-950 dark:text-white font-bold' : 'text-gray-700 dark:text-gray-300'}`}>
+                      {item.activity}
+                    </span>
+                    {isActive && (
+                      <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping" />
+                        Active Now {minutesRemaining > 0 && `(${minutesRemaining}m left)`}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex gap-1 flex-shrink-0">
+                    <button
+                      onClick={() => startEdit(item)}
+                      className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setDeleteConfirm(item)}
+                      className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              /* View mode */
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 flex-shrink-0 w-40">
-                  <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                  <span className="text-xs font-medium text-primary-600 dark:text-primary-400">
-                    {item.timeSlot}
-                  </span>
-                </div>
-                <span className="text-sm text-gray-700 dark:text-gray-300 flex-1">
-                  {item.activity}
-                </span>
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => startEdit(item)}
-                    className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => setDeleteConfirm(item)}
-                    className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {deleteConfirm && (
