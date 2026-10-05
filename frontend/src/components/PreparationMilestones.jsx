@@ -66,7 +66,7 @@ export default function PreparationMilestones() {
             <h2 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">
               Preparation Roadmap & Phases
             </h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Targeting TCS NQT March 2027</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Targeting TCS NQT January 2027</p>
           </div>
         </div>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20">

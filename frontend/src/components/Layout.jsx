@@ -117,7 +117,7 @@ export default function Layout({ children, darkMode, setDarkMode }) {
             </div>
           )}
           <div className="px-2 pt-1 flex justify-between items-center text-[11px] text-gray-400 dark:text-gray-500">
-            <span>Exam: March 2027</span>
+            <span>Exam: January 2027</span>
             <span>v1.0</span>
           </div>
         </div>

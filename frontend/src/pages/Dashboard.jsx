@@ -13,7 +13,7 @@ import DailyExamTip from '../components/DailyExamTip';
 import PreparationMilestones from '../components/PreparationMilestones';
 import StudyResources from '../components/StudyResources';
 
-const EXAM_DATE = new Date('2027-03-01');
+const EXAM_DATE = new Date('2027-01-01');
 
 const priorityConfig = {
   HIGH: { label: 'High', color: 'bg-red-500/10 text-red-500 border-red-500/20' },
@@ -168,7 +168,7 @@ export default function Dashboard() {
             <div className="w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
               <CalendarDays className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Exam: March 2027</span>
+            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Exam: January 2027</span>
           </div>
           <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">{daysRemaining}</p>
           <p className="text-sm text-gray-500 dark:text-gray-400">days remaining</p>

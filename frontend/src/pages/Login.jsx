@@ -34,7 +34,7 @@ export default function Login() {
             className="w-16 h-16 rounded-2xl mx-auto shadow-2xl shadow-primary-500/30 mb-4 object-cover ring-2 ring-primary-500/40"
           />
           <h1 className="text-2xl font-bold tracking-tight text-white">TCS NQT Study Tracker</h1>
-          <p className="text-sm text-gray-400 mt-1">Target Exam: March 2027</p>
+          <p className="text-sm text-gray-400 mt-1">Target Exam: January 2027</p>
         </div>
 
         {/* Card */}
