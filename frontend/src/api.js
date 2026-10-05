@@ -251,6 +251,64 @@ export const deleteTask = async (id) => {
   return { data: true };
 };
 
+export const generateTasksFromSchedule = async (date) => {
+  const targetDate = date || new Date().toISOString().slice(0, 10);
+  
+  // Standard routine mapping
+  const routineTasks = [
+    { title: 'Striver DSA', subject: 'DSA / Striver', plannedDuration: '2 hours', notes: '7:30 – 9:30 AM' },
+    { title: 'TCS NQT Aptitude', subject: 'TCS NQT Aptitude', plannedDuration: '2 hours', notes: '10:00 AM – 12:00 PM' },
+    { title: 'Development', subject: 'Development', plannedDuration: '2 hours', notes: '12:30 – 2:30 PM' },
+    { title: 'Coding Practice', subject: 'Coding Practice', plannedDuration: '1 hour', notes: '3:00 – 4:00 PM' },
+    { title: 'Communication Practice', subject: 'Communication', plannedDuration: '30 mins', notes: '4:00 – 4:30 PM' },
+    { title: 'Daily Revision', subject: 'Interview Preparation', plannedDuration: '1 hour', notes: '8:00 – 9:00 PM' },
+    { title: 'Interview Preparation', subject: 'Interview Preparation', plannedDuration: '45 mins', notes: '9:00 – 9:45 PM' },
+  ];
+
+  if (isSupabaseConfigured) {
+    // Check if tasks already exist for this date
+    const { data: existing } = await supabase.from('tasks').select('id').eq('date', targetDate);
+    if (existing && existing.length > 0) {
+      // Return existing tasks
+      return getTasks(targetDate);
+    }
+
+    const toInsert = routineTasks.map((t) => ({
+      title: t.title,
+      subject: t.subject,
+      date: targetDate,
+      planned_duration: t.plannedDuration,
+      completed: false,
+      notes: t.notes,
+    }));
+
+    const { data, error } = await supabase.from('tasks').insert(toInsert).select();
+    if (error) throw error;
+    return { data: (data || []).map(formatTask) };
+  }
+
+  // Fallback
+  const tasks = getLocal(STORAGE_KEYS.TASKS, []);
+  const existingForDate = tasks.filter((t) => t.date === targetDate);
+  if (existingForDate.length > 0) {
+    return { data: existingForDate };
+  }
+
+  const newCreated = routineTasks.map((t, idx) => ({
+    id: Date.now() + idx,
+    title: t.title,
+    subject: t.subject,
+    date: targetDate,
+    plannedDuration: t.plannedDuration,
+    completed: false,
+    notes: t.notes,
+  }));
+
+  const updated = [...tasks, ...newCreated];
+  setLocal(STORAGE_KEYS.TASKS, updated);
+  return { data: newCreated };
+};
+
 // -------------------------------------------------------------
 // DSA PROGRESS
 // -------------------------------------------------------------

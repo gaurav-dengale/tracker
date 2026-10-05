@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  CalendarDays, CheckCircle2, Clock, TrendingUp, BookOpen, ChevronRight
+  CalendarDays, CheckCircle2, Clock, TrendingUp, BookOpen, ChevronRight, Sparkles
 } from 'lucide-react';
-import { getTasks, getDsaProgress, getSubjectProgress } from '../api';
+import { getTasks, getDsaProgress, getSubjectProgress, generateTasksFromSchedule } from '../api';
 import ProgressBar from '../components/ProgressBar';
 
 const EXAM_DATE = new Date('2027-03-01');
@@ -26,29 +26,43 @@ export default function Dashboard() {
   const [dsa, setDsa] = useState(null);
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
 
   const today = new Date().toISOString().slice(0, 10);
   const daysRemaining = getDaysRemaining();
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [tasksRes, dsaRes, subjectsRes] = await Promise.all([
-          getTasks(today),
-          getDsaProgress(),
-          getSubjectProgress(),
-        ]);
-        setTodayTasks(tasksRes.data);
-        setDsa(dsaRes.data);
-        setSubjects(subjectsRes.data);
-      } catch (err) {
-        console.error('Error loading dashboard', err);
-      } finally {
-        setLoading(false);
-      }
+  const loadData = async () => {
+    try {
+      const [tasksRes, dsaRes, subjectsRes] = await Promise.all([
+        getTasks(today),
+        getDsaProgress(),
+        getSubjectProgress(),
+      ]);
+      setTodayTasks(tasksRes.data);
+      setDsa(dsaRes.data);
+      setSubjects(subjectsRes.data);
+    } catch (err) {
+      console.error('Error loading dashboard', err);
+    } finally {
+      setLoading(false);
     }
-    load();
+  };
+
+  useEffect(() => {
+    loadData();
   }, [today]);
+
+  const handleAutoGenerate = async () => {
+    setGenerating(true);
+    try {
+      const res = await generateTasksFromSchedule(today);
+      setTodayTasks(res.data);
+    } catch (err) {
+      console.error('Error generating tasks', err);
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const completedCount = todayTasks.filter((t) => t.completed).length;
   const totalCount = todayTasks.length;
@@ -130,9 +144,19 @@ export default function Dashboard() {
         </div>
 
         {todayTasks.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-400 text-sm">No tasks for today.</p>
-            <Link to="/tasks" className="btn-primary mt-3 inline-flex">Add Task</Link>
+          <div className="text-center py-8 space-y-3">
+            <p className="text-gray-400 text-sm">No tasks added for today yet.</p>
+            <div className="flex items-center justify-center gap-3">
+              <button
+                className="btn-primary inline-flex items-center gap-1.5 text-sm"
+                onClick={handleAutoGenerate}
+                disabled={generating}
+              >
+                <Sparkles className="w-4 h-4" />
+                {generating ? 'Generating...' : 'Auto-Fill Routine Tasks'}
+              </button>
+              <Link to="/tasks" className="btn-secondary inline-flex text-sm">Custom Task</Link>
+            </div>
           </div>
         ) : (
           <ul className="space-y-2">

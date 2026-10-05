@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Pencil, Trash2, Check } from 'lucide-react';
-import { getTasks, createTask, updateTask, toggleTask, deleteTask } from '../api';
+import { Plus, Pencil, Trash2, Check, Sparkles, RefreshCw } from 'lucide-react';
+import { getTasks, createTask, updateTask, toggleTask, deleteTask, generateTasksFromSchedule } from '../api';
 import TaskModal from '../components/TaskModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import ProgressBar from '../components/ProgressBar';
@@ -23,6 +23,7 @@ const subjectColors = {
 export default function TodaysTasks() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -41,6 +42,18 @@ export default function TodaysTasks() {
   }, [selectedDate]);
 
   useEffect(() => { loadTasks(); }, [loadTasks]);
+
+  const handleAutoGenerate = async () => {
+    setGenerating(true);
+    try {
+      const res = await generateTasksFromSchedule(selectedDate);
+      setTasks(res.data);
+    } catch (err) {
+      console.error('Error generating tasks from schedule', err);
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const handleSave = async (form) => {
     try {
@@ -94,7 +107,7 @@ export default function TodaysTasks() {
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{formatToday()}</p>
           )}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           <input
             type="date"
             className="input-field w-auto text-sm"
@@ -102,7 +115,20 @@ export default function TodaysTasks() {
             onChange={(e) => setSelectedDate(e.target.value)}
           />
           <button
-            className="btn-primary"
+            className="btn-secondary text-sm flex items-center gap-1.5"
+            onClick={handleAutoGenerate}
+            disabled={generating}
+            title="Generate standard routine study tasks"
+          >
+            {generating ? (
+              <RefreshCw className="w-4 h-4 animate-spin text-primary-500" />
+            ) : (
+              <Sparkles className="w-4 h-4 text-primary-500" />
+            )}
+            <span>Auto-Fill Routine</span>
+          </button>
+          <button
+            className="btn-primary text-sm flex items-center gap-1.5"
             onClick={() => { setEditingTask(null); setShowModal(true); }}
           >
             <Plus className="w-4 h-4" /> Add Task
@@ -133,14 +159,29 @@ export default function TodaysTasks() {
       {loading ? (
         <div className="text-center py-16 text-gray-400 text-sm">Loading tasks...</div>
       ) : tasks.length === 0 ? (
-        <div className="card p-10 text-center">
-          <p className="text-gray-400 mb-4">No tasks for this date.</p>
-          <button
-            className="btn-primary"
-            onClick={() => { setEditingTask(null); setShowModal(true); }}
-          >
-            <Plus className="w-4 h-4" /> Add Your First Task
-          </button>
+        <div className="card p-10 text-center space-y-4">
+          <div>
+            <p className="text-gray-400 text-sm">No tasks added for this date yet.</p>
+            <p className="text-xs text-gray-500 mt-1">
+              You can populate today's schedule routine with 1 click or create custom tasks.
+            </p>
+          </div>
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <button
+              className="btn-primary flex items-center gap-2"
+              onClick={handleAutoGenerate}
+              disabled={generating}
+            >
+              <Sparkles className="w-4 h-4" />
+              {generating ? 'Populating...' : 'Auto-Fill from Daily Routine'}
+            </button>
+            <button
+              className="btn-secondary flex items-center gap-1.5"
+              onClick={() => { setEditingTask(null); setShowModal(true); }}
+            >
+              <Plus className="w-4 h-4" /> Custom Task
+            </button>
+          </div>
         </div>
       ) : (
         <ul className="space-y-3">
@@ -181,7 +222,7 @@ export default function TodaysTasks() {
                     <span>⏱ {task.plannedDuration}</span>
                   )}
                   {task.notes && (
-                    <span className="text-gray-400 truncate max-w-[200px]">{task.notes}</span>
+                    <span className="text-gray-400 truncate max-w-[200px]">📍 {task.notes}</span>
                   )}
                 </div>
               </div>
