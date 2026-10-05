@@ -147,21 +147,28 @@ export const getTasksByRange = async (start, end) => {
 };
 
 export const createTask = async (task) => {
+  const priority = task.priority || 'MEDIUM';
   if (isSupabaseConfigured) {
-    const { data, error } = await supabase
-      .from('tasks')
-      .insert({
-        title: task.title,
-        subject: task.subject,
-        date: task.date,
-        planned_duration: task.plannedDuration,
-        completed: task.completed || false,
-        notes: task.notes || '',
-      })
-      .select()
-      .single();
-    if (error) throw error;
-    return { data: formatTask(data) };
+    const payload = {
+      title: task.title,
+      subject: task.subject,
+      priority,
+      date: task.date,
+      planned_duration: task.plannedDuration,
+      completed: task.completed || false,
+      notes: task.notes || '',
+    };
+    try {
+      const { data, error } = await supabase.from('tasks').insert(payload).select().single();
+      if (error) throw error;
+      return { data: formatTask(data) };
+    } catch {
+      // If priority column is missing in DB, insert without it
+      delete payload.priority;
+      const { data, error } = await supabase.from('tasks').insert(payload).select().single();
+      if (error) throw error;
+      return { data: { ...formatTask(data), priority } };
+    }
   }
 
   // Fallback
@@ -170,6 +177,7 @@ export const createTask = async (task) => {
     id: Date.now(),
     title: task.title,
     subject: task.subject,
+    priority,
     date: task.date,
     plannedDuration: task.plannedDuration,
     completed: task.completed || false,
@@ -181,33 +189,48 @@ export const createTask = async (task) => {
 };
 
 export const updateTask = async (id, task) => {
+  const priority = task.priority || 'MEDIUM';
   if (isSupabaseConfigured) {
-    const { data, error } = await supabase
-      .from('tasks')
-      .update({
-        title: task.title,
-        subject: task.subject,
-        date: task.date,
-        planned_duration: task.plannedDuration,
-        completed: task.completed,
-        notes: task.notes,
-      })
-      .eq('id', id)
-      .select()
-      .single();
-    if (error) throw error;
-    return { data: formatTask(data) };
+    const payload = {
+      title: task.title,
+      subject: task.subject,
+      priority,
+      date: task.date,
+      planned_duration: task.plannedDuration,
+      completed: task.completed,
+      notes: task.notes,
+    };
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .update(payload)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return { data: formatTask(data) };
+    } catch {
+      delete payload.priority;
+      const { data, error } = await supabase
+        .from('tasks')
+        .update(payload)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return { data: { ...formatTask(data), priority } };
+    }
   }
 
   // Fallback
   const tasks = getLocal(STORAGE_KEYS.TASKS, []);
   const idx = tasks.findIndex((t) => t.id === id);
   if (idx !== -1) {
-    tasks[idx] = { ...tasks[idx], ...task, id };
+    tasks[idx] = { ...tasks[idx], ...task, priority, id };
     setLocal(STORAGE_KEYS.TASKS, tasks);
     return { data: tasks[idx] };
   }
-  return { data: task };
+  return { data: { ...task, priority } };
 };
 
 export const toggleTask = async (id) => {
@@ -256,37 +279,44 @@ export const deleteTask = async (id) => {
 export const generateTasksFromSchedule = async (date) => {
   const targetDate = date || getLocalDateString();
   
-  // Standard routine mapping
+  // Standard routine mapping with priority assignments
   const routineTasks = [
-    { title: 'Striver DSA', subject: 'DSA / Striver', plannedDuration: '2 hours', notes: '7:30 – 9:30 AM' },
-    { title: 'TCS NQT Aptitude', subject: 'TCS NQT Aptitude', plannedDuration: '2 hours', notes: '10:00 AM – 12:00 PM' },
-    { title: 'Development', subject: 'Development', plannedDuration: '2 hours', notes: '12:30 – 2:30 PM' },
-    { title: 'Coding Practice', subject: 'Coding Practice', plannedDuration: '1 hour', notes: '3:00 – 4:00 PM' },
-    { title: 'Communication Practice', subject: 'Communication', plannedDuration: '30 mins', notes: '4:00 – 4:30 PM' },
-    { title: 'Daily Revision', subject: 'Interview Preparation', plannedDuration: '1 hour', notes: '8:00 – 9:00 PM' },
-    { title: 'Interview Preparation', subject: 'Interview Preparation', plannedDuration: '45 mins', notes: '9:00 – 9:45 PM' },
+    { title: 'Striver DSA', subject: 'DSA / Striver', priority: 'HIGH', plannedDuration: '2 hours', notes: '7:30 – 9:30 AM' },
+    { title: 'TCS NQT Aptitude', subject: 'TCS NQT Aptitude', priority: 'HIGH', plannedDuration: '2 hours', notes: '10:00 AM – 12:00 PM' },
+    { title: 'Development', subject: 'Development', priority: 'MEDIUM', plannedDuration: '2 hours', notes: '12:30 – 2:30 PM' },
+    { title: 'Coding Practice', subject: 'Coding Practice', priority: 'HIGH', plannedDuration: '1 hour', notes: '3:00 – 4:00 PM' },
+    { title: 'Communication Practice', subject: 'Communication', priority: 'LOW', plannedDuration: '30 mins', notes: '4:00 – 4:30 PM' },
+    { title: 'Daily Revision', subject: 'Interview Preparation', priority: 'MEDIUM', plannedDuration: '1 hour', notes: '8:00 – 9:00 PM' },
+    { title: 'Interview Preparation', subject: 'Interview Preparation', priority: 'HIGH', plannedDuration: '45 mins', notes: '9:00 – 9:45 PM' },
   ];
 
   if (isSupabaseConfigured) {
-    // Check if tasks already exist for this date
     const { data: existing } = await supabase.from('tasks').select('id').eq('date', targetDate);
     if (existing && existing.length > 0) {
-      // Return existing tasks
       return getTasks(targetDate);
     }
 
     const toInsert = routineTasks.map((t) => ({
       title: t.title,
       subject: t.subject,
+      priority: t.priority,
       date: targetDate,
       planned_duration: t.plannedDuration,
       completed: false,
       notes: t.notes,
     }));
 
-    const { data, error } = await supabase.from('tasks').insert(toInsert).select();
-    if (error) throw error;
-    return { data: (data || []).map(formatTask) };
+    try {
+      const { data, error } = await supabase.from('tasks').insert(toInsert).select();
+      if (error) throw error;
+      return { data: (data || []).map(formatTask) };
+    } catch {
+      // Fallback if priority column isn't created in Supabase yet
+      const safeInsert = toInsert.map(({ priority: _p, ...rest }) => rest);
+      const { data, error } = await supabase.from('tasks').insert(safeInsert).select();
+      if (error) throw error;
+      return { data: (data || []).map((row, idx) => ({ ...formatTask(row), priority: routineTasks[idx]?.priority || 'MEDIUM' })) };
+    }
   }
 
   // Fallback
@@ -300,6 +330,7 @@ export const generateTasksFromSchedule = async (date) => {
     id: Date.now() + idx,
     title: t.title,
     subject: t.subject,
+    priority: t.priority,
     date: targetDate,
     plannedDuration: t.plannedDuration,
     completed: false,

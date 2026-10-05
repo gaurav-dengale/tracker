@@ -8,12 +8,16 @@ CREATE TABLE IF NOT EXISTS public.tasks (
     id BIGSERIAL PRIMARY KEY,
     title TEXT NOT NULL,
     subject TEXT NOT NULL,
+    priority TEXT NOT NULL DEFAULT 'MEDIUM',
     date DATE NOT NULL DEFAULT CURRENT_DATE,
     planned_duration TEXT,
     completed BOOLEAN NOT NULL DEFAULT FALSE,
     notes TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Ensure priority column exists on existing installations
+ALTER TABLE public.tasks ADD COLUMN IF NOT EXISTS priority TEXT DEFAULT 'MEDIUM';
 
 -- 2. DSA Progress Table
 CREATE TABLE IF NOT EXISTS public.dsa_progress (
