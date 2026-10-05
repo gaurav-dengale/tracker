@@ -1,19 +1,38 @@
 import { supabase, isSupabaseConfigured } from './lib/supabaseClient';
 import { getLocalDateString } from './lib/dateUtils';
 
-// Helper to format task row from DB
+const PRIORITY_TAG_REGEX = /\[PRIORITY:(HIGH|MEDIUM|LOW)\]\s*/i;
+
+function encodePriority(notes, priority) {
+  const p = (priority || 'MEDIUM').toUpperCase();
+  const cleanNotes = (notes || '').replace(PRIORITY_TAG_REGEX, '').trim();
+  return `[PRIORITY:${p}]` + (cleanNotes ? ` ${cleanNotes}` : '');
+}
+
+// Helper to format/decode task row from DB
 function formatTask(row) {
   if (!row) return null;
+  let priority = row.priority;
+  let notes = row.notes || '';
+
+  const match = notes.match(PRIORITY_TAG_REGEX);
+  if (match) {
+    if (!priority) {
+      priority = match[1].toUpperCase();
+    }
+    notes = notes.replace(PRIORITY_TAG_REGEX, '').trim();
+  }
+
   return {
     id: row.id,
     title: row.title,
     subject: row.subject,
-    priority: row.priority || 'MEDIUM',
+    priority: (priority || 'MEDIUM').toUpperCase(),
     date: row.date,
-    plannedDuration: row.planned_duration,
-    completed: row.completed,
-    notes: row.notes,
-    createdAt: row.created_at,
+    plannedDuration: row.planned_duration || row.plannedDuration || '',
+    completed: Boolean(row.completed),
+    notes,
+    createdAt: row.created_at || row.createdAt,
   };
 }
 
@@ -124,7 +143,7 @@ export const getTasks = async (date) => {
   if (date) {
     tasks = tasks.filter((t) => t.date === date);
   }
-  return { data: tasks };
+  return { data: tasks.map(formatTask) };
 };
 
 export const getTasksByRange = async (start, end) => {
@@ -143,11 +162,13 @@ export const getTasksByRange = async (start, end) => {
   // Fallback
   const tasks = getLocal(STORAGE_KEYS.TASKS, []);
   const filtered = tasks.filter((t) => t.date >= start && t.date <= end);
-  return { data: filtered };
+  return { data: filtered.map(formatTask) };
 };
 
 export const createTask = async (task) => {
-  const priority = task.priority || 'MEDIUM';
+  const priority = (task.priority || 'MEDIUM').toUpperCase();
+  const encodedNotes = encodePriority(task.notes, priority);
+
   if (isSupabaseConfigured) {
     const payload = {
       title: task.title,
@@ -156,18 +177,18 @@ export const createTask = async (task) => {
       date: task.date,
       planned_duration: task.plannedDuration,
       completed: task.completed || false,
-      notes: task.notes || '',
+      notes: encodedNotes,
     };
     try {
       const { data, error } = await supabase.from('tasks').insert(payload).select().single();
       if (error) throw error;
       return { data: formatTask(data) };
     } catch {
-      // If priority column is missing in DB, insert without it
+      // If priority column is missing in DB, insert with priority encoded in notes
       delete payload.priority;
       const { data, error } = await supabase.from('tasks').insert(payload).select().single();
       if (error) throw error;
-      return { data: { ...formatTask(data), priority } };
+      return { data: formatTask(data) };
     }
   }
 
@@ -189,7 +210,9 @@ export const createTask = async (task) => {
 };
 
 export const updateTask = async (id, task) => {
-  const priority = task.priority || 'MEDIUM';
+  const priority = (task.priority || 'MEDIUM').toUpperCase();
+  const encodedNotes = encodePriority(task.notes, priority);
+
   if (isSupabaseConfigured) {
     const payload = {
       title: task.title,
@@ -198,7 +221,7 @@ export const updateTask = async (id, task) => {
       date: task.date,
       planned_duration: task.plannedDuration,
       completed: task.completed,
-      notes: task.notes,
+      notes: encodedNotes,
     };
     try {
       const { data, error } = await supabase
@@ -218,7 +241,7 @@ export const updateTask = async (id, task) => {
         .select()
         .single();
       if (error) throw error;
-      return { data: { ...formatTask(data), priority } };
+      return { data: formatTask(data) };
     }
   }
 
@@ -303,7 +326,7 @@ export const generateTasksFromSchedule = async (date) => {
       date: targetDate,
       planned_duration: t.plannedDuration,
       completed: false,
-      notes: t.notes,
+      notes: encodePriority(t.notes, t.priority),
     }));
 
     try {
@@ -315,7 +338,7 @@ export const generateTasksFromSchedule = async (date) => {
       const safeInsert = toInsert.map(({ priority: _p, ...rest }) => rest);
       const { data, error } = await supabase.from('tasks').insert(safeInsert).select();
       if (error) throw error;
-      return { data: (data || []).map((row, idx) => ({ ...formatTask(row), priority: routineTasks[idx]?.priority || 'MEDIUM' })) };
+      return { data: (data || []).map(formatTask) };
     }
   }
 

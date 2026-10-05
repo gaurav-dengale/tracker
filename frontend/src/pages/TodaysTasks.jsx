@@ -92,6 +92,22 @@ export default function TodaysTasks() {
     }
   };
 
+  const handleCyclePriority = async (task, e) => {
+    e.stopPropagation();
+    const cycle = { HIGH: 'MEDIUM', MEDIUM: 'LOW', LOW: 'HIGH' };
+    const nextPriority = cycle[task.priority] || 'HIGH';
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, priority: nextPriority } : t)));
+    try {
+      const res = await updateTask(task.id, { ...task, priority: nextPriority });
+      if (res?.data) {
+        setTasks((prev) => prev.map((t) => (t.id === task.id ? res.data : t)));
+      }
+    } catch (err) {
+      console.error('Error updating priority', err);
+      loadTasks();
+    }
+  };
+
   const completed = tasks.filter((t) => t.completed).length;
   const total = tasks.length;
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -221,15 +237,20 @@ export default function TodaysTasks() {
                   <span className={`px-2 py-0.5 rounded-full font-medium ${subjectColors[task.subject] || 'bg-gray-100 text-gray-600'}`}>
                     {task.subject}
                   </span>
-                  <span className={`px-2 py-0.5 rounded-md font-semibold text-[10px] border ${
-                    task.priority === 'HIGH'
-                      ? 'bg-red-500/10 text-red-500 border-red-500/30'
-                      : task.priority === 'LOW'
-                      ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
-                      : 'bg-amber-500/10 text-amber-500 border-amber-500/30'
-                  }`}>
+                  <button
+                    type="button"
+                    onClick={(e) => handleCyclePriority(task, e)}
+                    title="Click to cycle priority (High -> Med -> Low)"
+                    className={`px-2 py-0.5 rounded-md font-semibold text-[10px] border cursor-pointer hover:scale-105 transition-transform ${
+                      task.priority === 'HIGH'
+                        ? 'bg-red-500/10 text-red-500 border-red-500/30 hover:bg-red-500/20'
+                        : task.priority === 'LOW'
+                        ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/20'
+                        : 'bg-amber-500/10 text-amber-500 border-amber-500/30 hover:bg-amber-500/20'
+                    }`}
+                  >
                     {task.priority === 'HIGH' ? '🔴 High' : task.priority === 'LOW' ? '🟢 Low' : '🟡 Med'}
-                  </span>
+                  </button>
                   {task.plannedDuration && (
                     <span>⏱ {task.plannedDuration}</span>
                   )}
