@@ -21,6 +21,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { getUserXp, getLevelInfo } from '../lib/gamificationUtils';
 import PomodoroTimer from './PomodoroTimer';
 import Scratchpad from './Scratchpad';
 import AiStudyTutor from './AiStudyTutor';
@@ -42,13 +43,28 @@ export default function Layout({ children, darkMode, setDarkMode }) {
   const [pomodoroOpen, setPomodoroOpen] = useState(false);
   const [scratchpadOpen, setScratchpadOpen] = useState(false);
   const [aiTutorOpen, setAiTutorOpen] = useState(false);
+  const [userXp, setUserXp] = useState(getUserXp());
   const { user, signOut } = useAuth();
 
-  // Listen to open-pomodoro event triggered by minimized widget
+  const levelInfo = getLevelInfo(userXp);
+
+  // Listen to open-pomodoro and xp-updated events
   useEffect(() => {
     const handleOpenPomodoro = () => setPomodoroOpen(true);
+    const handleXpUpdate = (e) => {
+      if (e?.detail?.xp !== undefined) {
+        setUserXp(e.detail.xp);
+      } else {
+        setUserXp(getUserXp());
+      }
+    };
+
     window.addEventListener('open-pomodoro', handleOpenPomodoro);
-    return () => window.removeEventListener('open-pomodoro', handleOpenPomodoro);
+    window.addEventListener('xp-updated', handleXpUpdate);
+    return () => {
+      window.removeEventListener('open-pomodoro', handleOpenPomodoro);
+      window.removeEventListener('xp-updated', handleXpUpdate);
+    };
   }, []);
 
   return (
@@ -153,6 +169,17 @@ export default function Layout({ children, darkMode, setDarkMode }) {
 
           {/* PWA Install Button (Appears if installable on Android/iOS/Desktop) */}
           <PwaInstallPrompt />
+
+          {/* Live Level & XP Header Badge */}
+          <NavLink
+            to="/quiz"
+            title={`Level ${levelInfo.level}: ${levelInfo.title} (${userXp} Total XP)`}
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-gray-100 dark:bg-gray-800/80 hover:bg-gray-200 dark:hover:bg-gray-700/80 border border-gray-200 dark:border-gray-700/80 transition-all text-xs font-semibold"
+          >
+            <span className="text-sm">{levelInfo.icon}</span>
+            <span className="text-gray-900 dark:text-white font-bold">{userXp} XP</span>
+            <span className="text-[10px] text-gray-500 dark:text-gray-400">· Lvl {levelInfo.level}</span>
+          </NavLink>
 
           {/* AI Study Tutor Topbar Button */}
           <button

@@ -30,6 +30,23 @@ export function addXp(amount) {
     const current = getUserXp();
     const updated = current + amount;
     localStorage.setItem(STORAGE_KEY_XP, updated.toString());
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('xp-updated', { detail: { xp: updated, diff: amount } }));
+    }
+    return updated;
+  } catch {
+    return getUserXp();
+  }
+}
+
+export function deductXp(amount) {
+  try {
+    const current = getUserXp();
+    const updated = Math.max(0, current - amount);
+    localStorage.setItem(STORAGE_KEY_XP, updated.toString());
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('xp-updated', { detail: { xp: updated, diff: -amount } }));
+    }
     return updated;
   } catch {
     return getUserXp();

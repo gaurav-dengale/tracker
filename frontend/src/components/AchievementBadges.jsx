@@ -1,11 +1,24 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Award, Trophy, Star, Lock, Sparkles, Zap, ShieldCheck } from 'lucide-react';
 import { getBadges, getUserXp, getLevelInfo } from '../lib/gamificationUtils';
 
 export default function AchievementBadges({ stats = {} }) {
-  const [xp] = useState(getUserXp());
+  const [xp, setXp] = useState(getUserXp());
+
+  useEffect(() => {
+    const handleXpUpdate = (e) => {
+      if (e?.detail?.xp !== undefined) {
+        setXp(e.detail.xp);
+      } else {
+        setXp(getUserXp());
+      }
+    };
+    window.addEventListener('xp-updated', handleXpUpdate);
+    return () => window.removeEventListener('xp-updated', handleXpUpdate);
+  }, []);
+
   const levelInfo = getLevelInfo(xp);
-  const badges = getBadges(stats);
+  const badges = getBadges({ ...stats, xp });
   const unlockedCount = badges.filter((b) => b.unlocked).length;
 
   return (

@@ -49,6 +49,15 @@ export default function PracticeQuiz() {
 
   useEffect(() => {
     setQuizHistory(getQuizHistory());
+    const handleXpUpdate = (e) => {
+      if (e?.detail?.xp !== undefined) {
+        setUserXp(e.detail.xp);
+      } else {
+        setUserXp(getUserXp());
+      }
+    };
+    window.addEventListener('xp-updated', handleXpUpdate);
+    return () => window.removeEventListener('xp-updated', handleXpUpdate);
   }, []);
 
   // Timer countdown in test mode with timestamp-based precision & tab switch sync

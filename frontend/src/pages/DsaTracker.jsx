@@ -13,6 +13,7 @@ import {
 import { DSA_TOPICS, DSA_PROBLEMS } from '../data/dsaSheetData';
 import { playSuccessChime, playChime } from '../lib/soundUtils';
 import { triggerCelebration, triggerTaskCelebration } from '../lib/confetti';
+import { addXp, deductXp } from '../lib/gamificationUtils';
 import ProgressBar from '../components/ProgressBar';
 import AiStudyTutor from '../components/AiStudyTutor';
 
@@ -118,16 +119,19 @@ export default function DsaTracker() {
 
     if (res.isSolved) {
       triggerTaskCelebration(e);
+      addXp(25); // 25 XP per DSA problem solved
       // Check if this topic reached 100%
       const prob = DSA_PROBLEMS.find((p) => p.id === problemId);
       if (prob) {
         const topicProblems = DSA_PROBLEMS.filter((p) => p.topicId === prob.topicId);
         const allSolved = topicProblems.every((p) => p.id === problemId || res.solvedIds.includes(p.id));
         if (allSolved) {
+          addXp(100); // 100 XP topic mastery bonus
           triggerCelebration();
         }
       }
     } else {
+      deductXp(25);
       playChime();
     }
   };

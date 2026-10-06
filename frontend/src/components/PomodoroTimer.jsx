@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Play, Pause, RotateCcw, X, Bell, Coffee, Brain, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { playChime } from '../lib/soundUtils';
+import { addXp } from '../lib/gamificationUtils';
 
 const STORAGE_KEY = 'nqt_pomodoro_state';
 
@@ -88,6 +89,7 @@ export default function PomodoroTimer({ isOpen, onClose }) {
         targetEndTimeRef.current = null;
         setIsRunning(false);
         playChime();
+        addXp(selectedMode.minutes >= 50 ? 40 : 20); // Award Focus XP
 
         try {
           if ('Notification' in window && Notification.permission === 'granted') {

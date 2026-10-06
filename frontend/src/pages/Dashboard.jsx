@@ -8,6 +8,7 @@ import { getLocalDateString, formatIndianDate } from '../lib/dateUtils';
 import { getActiveScheduleItem } from '../lib/timeUtils';
 import { calculateStreak } from '../lib/streakUtils';
 import { triggerCelebration, triggerTaskCelebration } from '../lib/confetti';
+import { addXp, deductXp } from '../lib/gamificationUtils';
 import ProgressBar from '../components/ProgressBar';
 import DailyExamTip from '../components/DailyExamTip';
 import PreparationMilestones from '../components/PreparationMilestones';
@@ -85,10 +86,13 @@ export default function Dashboard() {
     const isNowCompleting = !task.completed;
     if (isNowCompleting) {
       triggerTaskCelebration(e);
+      addXp(15);
       setRecentlyCompletedId(task.id);
       setTimeout(() => {
         setRecentlyCompletedId((prev) => (prev === task.id ? null : prev));
       }, 1200);
+    } else {
+      deductXp(15);
     }
 
     try {
@@ -97,6 +101,7 @@ export default function Dashboard() {
         const next = prev.map((t) => (t.id === task.id ? res.data : t));
         const allDone = next.length > 0 && next.every((t) => t.completed);
         if (allDone && isNowCompleting) {
+          addXp(50); // Daily completion bonus
           triggerCelebration();
         }
         return next;

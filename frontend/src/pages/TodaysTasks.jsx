@@ -3,6 +3,7 @@ import { Plus, Pencil, Trash2, Check, Sparkles, RefreshCw, Zap } from 'lucide-re
 import { getTasks, createTask, updateTask, toggleTask, deleteTask, generateTasksFromSchedule } from '../api';
 import { getLocalDateString, formatIndianDate } from '../lib/dateUtils';
 import { triggerCelebration, triggerTaskCelebration } from '../lib/confetti';
+import { addXp, deductXp } from '../lib/gamificationUtils';
 import TaskModal from '../components/TaskModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import ProgressBar from '../components/ProgressBar';
@@ -71,10 +72,13 @@ export default function TodaysTasks() {
     const isNowCompleting = !task.completed;
     if (isNowCompleting) {
       triggerTaskCelebration(e);
+      addXp(15);
       setRecentlyCompletedId(task.id);
       setTimeout(() => {
         setRecentlyCompletedId((prev) => (prev === task.id ? null : prev));
       }, 1200);
+    } else {
+      deductXp(15);
     }
 
     try {
@@ -83,6 +87,7 @@ export default function TodaysTasks() {
         const next = prev.map((t) => (t.id === task.id ? res.data : t));
         const allDone = next.length > 0 && next.every((t) => t.completed);
         if (allDone && isNowCompleting) {
+          addXp(50); // Grand completion daily bonus
           triggerCelebration();
         }
         return next;
