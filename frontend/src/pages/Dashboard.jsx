@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   CalendarDays, CheckCircle2, BookOpen, ChevronRight, Sparkles, Flame, Zap, ArrowRight, Check
 } from 'lucide-react';
-import { getTasks, getDsaProgress, getSubjectProgress, getSchedule, generateTasksFromSchedule, toggleTask } from '../api';
+import { getTasks, getDsaProgress, getSchedule, generateTasksFromSchedule, toggleTask } from '../api';
 import { getLocalDateString, formatIndianDate } from '../lib/dateUtils';
 import { getActiveScheduleItem } from '../lib/timeUtils';
 import { calculateStreak } from '../lib/streakUtils';
@@ -35,7 +35,6 @@ export default function Dashboard() {
   const [todayTasks, setTodayTasks] = useState([]);
   const [allTasks, setAllTasks] = useState([]);
   const [dsa, setDsa] = useState(null);
-  const [subjects, setSubjects] = useState([]);
   const [schedule, setSchedule] = useState([]);
   const [activeSlot, setActiveSlot] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -48,17 +47,15 @@ export default function Dashboard() {
 
   const loadData = async () => {
     try {
-      const [todayTasksRes, allTasksRes, dsaRes, subjectsRes, scheduleRes] = await Promise.all([
+      const [todayTasksRes, allTasksRes, dsaRes, scheduleRes] = await Promise.all([
         getTasks(today),
         getTasks(),
         getDsaProgress(),
-        getSubjectProgress(),
         getSchedule(),
       ]);
       setTodayTasks(todayTasksRes?.data || []);
       setAllTasks(allTasksRes?.data || []);
       setDsa(dsaRes?.data || null);
-      setSubjects(subjectsRes?.data || []);
       setSchedule(scheduleRes?.data || []);
 
       if (scheduleRes?.data && scheduleRes.data.length > 0) {
@@ -367,27 +364,6 @@ export default function Dashboard() {
 
       {/* Quick Study Resources */}
       <StudyResources />
-
-      {/* Subject Progress */}
-      <div className="card p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-gray-900 dark:text-white">Subject Progress Overview</h2>
-          <Link to="/subjects" className="text-sm text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1">
-            Edit <ChevronRight className="w-4 h-4" />
-          </Link>
-        </div>
-        <div className="space-y-3">
-          {(subjects || []).map((s) => (
-            <div key={s.id}>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-700 dark:text-gray-300 font-medium">{s.subject}</span>
-                <span className="text-gray-500 dark:text-gray-400">{s.progressPercentage}%</span>
-              </div>
-              <ProgressBar value={s.progressPercentage} max={100} />
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
