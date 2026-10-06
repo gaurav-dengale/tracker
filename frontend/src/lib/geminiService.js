@@ -27,20 +27,63 @@ export function saveApiKey(key) {
   } catch {}
 }
 
+let cachedWorkingModel = null;
+
+export async function getAvailableModels(apiKey) {
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data?.models && Array.isArray(data.models)) {
+      const generateModels = data.models
+        .filter((m) => (m.supportedGenerationMethods || []).includes('generateContent'))
+        .map((m) => m.name.replace(/^models\//, ''));
+      return generateModels;
+    }
+  } catch (e) {
+    console.debug('Failed to dynamically fetch Gemini models', e);
+  }
+  return null;
+}
+
 export async function askGemini(prompt, systemInstruction = DEFAULT_SYSTEM_PROMPT) {
   const apiKey = getApiKey();
   if (!apiKey) {
     throw new Error('Missing Gemini API Key. Please add your API key in Settings or .env file.');
   }
 
-  // Model list to try in order of performance and availability
-  const models = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+  // If we already found a working model in this session, try it first
+  const fallbackModels = [
+    cachedWorkingModel,
+    'gemini-1.5-flash',
+    'gemini-1.5-flash-latest',
+    'gemini-2.5-flash',
+    'gemini-1.5-flash-8b',
+    'gemini-pro',
+  ].filter(Boolean);
+
+  // Try dynamically discovering available models for this key
+  let modelsToTry = fallbackModels;
+  try {
+    const discovered = await getAvailableModels(apiKey);
+    if (discovered && discovered.length > 0) {
+      // Prioritize flash models, then pro models
+      const sorted = [
+        ...discovered.filter((m) => m.includes('flash')),
+        ...discovered.filter((m) => !m.includes('flash')),
+      ];
+      modelsToTry = Array.from(new Set([...(cachedWorkingModel ? [cachedWorkingModel] : []), ...sorted, ...fallbackModels]));
+    }
+  } catch {}
+
   let lastError = null;
 
-  for (const model of models) {
+  for (const model of modelsToTry) {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
-      
+
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -72,18 +115,26 @@ export async function askGemini(prompt, systemInstruction = DEFAULT_SYSTEM_PROMP
         throw new Error('Empty response received from AI model.');
       }
 
+      // Cache this working model for faster subsequent calls
+      cachedWorkingModel = model;
       return text;
     } catch (err) {
       lastError = err;
       // If unauthorized or bad key, don't keep cycling models
-      if (err.message && (err.message.includes('API_KEY_INVALID') || err.message.includes('API key not valid'))) {
-        throw new Error('Invalid Gemini API Key. Please check your key in settings.');
+      if (
+        err.message &&
+        (err.message.includes('API_KEY_INVALID') ||
+          err.message.includes('API key not valid') ||
+          err.message.includes('PERMISSION_DENIED'))
+      ) {
+        throw new Error('Invalid or unauthorized Gemini API Key. Please check your key in settings.');
       }
     }
   }
 
   throw lastError || new Error('Failed to connect to Gemini AI.');
 }
+
 
 // 1. Get Progressive DSA Hint
 export async function getDsaHint(problemTitle, topicName, difficulty) {
