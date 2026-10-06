@@ -34,7 +34,7 @@ export async function askGemini(prompt, systemInstruction = DEFAULT_SYSTEM_PROMP
   }
 
   // Model list to try in order of performance and availability
-  const models = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash'];
+  const models = ['gemini-3.8-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
   let lastError = null;
 
   for (const model of models) {
