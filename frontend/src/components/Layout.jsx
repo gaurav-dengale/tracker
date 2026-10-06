@@ -24,6 +24,8 @@ import { useAuth } from '../context/AuthContext';
 import PomodoroTimer from './PomodoroTimer';
 import Scratchpad from './Scratchpad';
 import AiStudyTutor from './AiStudyTutor';
+import PwaInstallPrompt from './PwaInstallPrompt';
+import OfflineIndicator from './OfflineIndicator';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -32,7 +34,7 @@ const navItems = [
   { to: '/schedule', label: 'Schedule', icon: Clock },
   { to: '/dsa', label: 'DSA Tracker', icon: BookOpen },
   { to: '/subjects', label: 'Subjects', icon: BarChart2 },
-  { to: '/weekly', label: 'Weekly Progress', icon: Calendar },
+  { to: '/weekly', label: 'Analytics & Weekly', icon: Calendar },
 ];
 
 export default function Layout({ children, darkMode, setDarkMode }) {
@@ -149,6 +151,9 @@ export default function Layout({ children, darkMode, setDarkMode }) {
 
           <div className="flex-1" />
 
+          {/* PWA Install Button (Appears if installable on Android/iOS/Desktop) */}
+          <PwaInstallPrompt />
+
           {/* AI Study Tutor Topbar Button */}
           <button
             onClick={() => setAiTutorOpen(true)}
@@ -199,7 +204,9 @@ export default function Layout({ children, darkMode, setDarkMode }) {
       <AiStudyTutor isOpen={aiTutorOpen} onClose={() => setAiTutorOpen(false)} />
       <PomodoroTimer isOpen={pomodoroOpen} onClose={() => setPomodoroOpen(false)} />
       <Scratchpad isOpen={scratchpadOpen} onClose={() => setScratchpadOpen(false)} />
+      <OfflineIndicator />
     </div>
   );
 }
+
 
