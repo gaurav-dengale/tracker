@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -16,13 +16,14 @@ import {
   User as UserIcon,
   Timer,
   BookMarked,
-  Zap
+  Zap,
+  Bot,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import PomodoroTimer from './PomodoroTimer';
 import Scratchpad from './Scratchpad';
 import AiStudyTutor from './AiStudyTutor';
-import { Bot, Sparkles } from 'lucide-react';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -40,10 +41,6 @@ export default function Layout({ children, darkMode, setDarkMode }) {
   const [scratchpadOpen, setScratchpadOpen] = useState(false);
   const [aiTutorOpen, setAiTutorOpen] = useState(false);
   const { user, signOut } = useAuth();
-
-  useState(() => {
-    // Keep reference in sync
-  });
 
   // Listen to open-pomodoro event triggered by minimized widget
   useEffect(() => {
