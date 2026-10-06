@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from './lib/supabaseClient';
 import { getLocalDateString } from './lib/dateUtils';
+import { DEFAULT_SUBJECT_SYLLABUS } from './data/subjectSyllabusData';
 
 const PRIORITY_TAG_REGEX = /\[PRIORITY:(HIGH|MEDIUM|LOW)\]\s*/i;
 
@@ -366,7 +367,7 @@ export const generateTasksFromSchedule = async (date) => {
 };
 
 // -------------------------------------------------------------
-// DSA PROGRESS
+// DSA PROGRESS & SHEET TRACKER
 // -------------------------------------------------------------
 
 export const getDsaProgress = async () => {
@@ -396,10 +397,13 @@ export const getDsaProgress = async () => {
 };
 
 export const updateDsaProgress = async (completedHours) => {
+  const comp = Math.max(0, parseFloat(completedHours) || 0);
   if (isSupabaseConfigured) {
+    const current = await getDsaProgress();
+    const total = current?.data?.totalHours || 110.0;
     const { data, error } = await supabase
       .from('dsa_progress')
-      .upsert({ id: 1, total_hours: 110.0, completed_hours: completedHours })
+      .upsert({ id: 1, total_hours: total, completed_hours: comp })
       .select()
       .single();
     if (error) throw error;
@@ -407,16 +411,143 @@ export const updateDsaProgress = async (completedHours) => {
   }
 
   // Fallback
-  const dsa = { id: 1, totalHours: 110, completedHours };
+  const current = getLocal(STORAGE_KEYS.DSA, { id: 1, totalHours: 110, completedHours: 0 });
+  const dsa = { ...current, id: 1, completedHours: comp };
   setLocal(STORAGE_KEYS.DSA, dsa);
-  return { data: formatDsa({ total_hours: 110, completed_hours: completedHours }) };
+  return { data: formatDsa({ total_hours: dsa.totalHours, completed_hours: comp }) };
+};
+
+export const updateDsaTargetHours = async (totalHours) => {
+  const target = Math.max(1, parseFloat(totalHours) || 110);
+  if (isSupabaseConfigured) {
+    const current = await getDsaProgress();
+    const comp = current?.data?.completedHours || 0;
+    const { data, error } = await supabase
+      .from('dsa_progress')
+      .upsert({ id: 1, total_hours: target, completed_hours: comp })
+      .select()
+      .single();
+    if (error) throw error;
+    return { data: formatDsa(data) };
+  }
+
+  const current = getLocal(STORAGE_KEYS.DSA, { id: 1, totalHours: 110, completedHours: 0 });
+  const dsa = { ...current, totalHours: target };
+  setLocal(STORAGE_KEYS.DSA, dsa);
+  return { data: formatDsa({ total_hours: target, completed_hours: dsa.completedHours }) };
+};
+
+export const getDsaSheetState = () => {
+  return {
+    solvedIds: getLocal('nqt_dsa_solved_ids', []),
+    starredIds: getLocal('nqt_dsa_starred_ids', []),
+    notes: getLocal('nqt_dsa_notes', {}),
+  };
+};
+
+export const toggleDsaProblemSolved = (problemId) => {
+  const solved = new Set(getLocal('nqt_dsa_solved_ids', []));
+  let isNowSolved = false;
+  if (solved.has(problemId)) {
+    solved.delete(problemId);
+    isNowSolved = false;
+  } else {
+    solved.add(problemId);
+    isNowSolved = true;
+  }
+  const updated = Array.from(solved);
+  setLocal('nqt_dsa_solved_ids', updated);
+  return { isSolved: isNowSolved, solvedIds: updated };
+};
+
+export const toggleDsaProblemStarred = (problemId) => {
+  const starred = new Set(getLocal('nqt_dsa_starred_ids', []));
+  let isNowStarred = false;
+  if (starred.has(problemId)) {
+    starred.delete(problemId);
+    isNowStarred = false;
+  } else {
+    starred.add(problemId);
+    isNowStarred = true;
+  }
+  const updated = Array.from(starred);
+  setLocal('nqt_dsa_starred_ids', updated);
+  return { isStarred: isNowStarred, starredIds: updated };
+};
+
+export const saveDsaProblemNote = (problemId, noteText) => {
+  const notes = getLocal('nqt_dsa_notes', {});
+  if (!noteText || !noteText.trim()) {
+    delete notes[problemId];
+  } else {
+    notes[problemId] = noteText.trim();
+  }
+  setLocal('nqt_dsa_notes', notes);
+  return notes;
+};
+
+export const getDsaStudySessions = () => {
+  return getLocal('nqt_dsa_sessions', []);
+};
+
+export const logDsaStudySession = async (session) => {
+  const sessions = getLocal('nqt_dsa_sessions', []);
+  const newSession = {
+    id: Date.now(),
+    date: session.date || getLocalDateString(),
+    durationHours: session.durationHours || 1.0,
+    topic: session.topic || 'General Practice',
+    notes: session.notes || '',
+    createdAt: new Date().toISOString(),
+  };
+  sessions.unshift(newSession);
+  setLocal('nqt_dsa_sessions', sessions);
+
+  // Auto-increment completed hours
+  const dsaRes = await getDsaProgress();
+  const currentHours = dsaRes?.data?.completedHours || 0;
+  const updatedHours = +(currentHours + Number(session.durationHours || 0)).toFixed(1);
+  await updateDsaProgress(updatedHours);
+
+  return { session: newSession, newCompletedHours: updatedHours };
 };
 
 // -------------------------------------------------------------
-// SUBJECT PROGRESS
+// SUBJECT PROGRESS & SYLLABUS ROADMAP
 // -------------------------------------------------------------
 
+export function calculateSubjectProgressPct(subjectObj) {
+  if (!subjectObj?.modules || subjectObj.modules.length === 0) {
+    return subjectObj?.progressPercentage || 0;
+  }
+  let totalTopics = 0;
+  let completedTopics = 0;
+  subjectObj.modules.forEach((mod) => {
+    (mod.topics || []).forEach((t) => {
+      totalTopics++;
+      if (t.completed) completedTopics++;
+    });
+  });
+  if (totalTopics === 0) return subjectObj?.progressPercentage || 0;
+  return Math.round((completedTopics / totalTopics) * 100);
+}
+
+export const getDetailedSubjects = () => {
+  return getLocal('nqt_subjects_detailed', DEFAULT_SUBJECT_SYLLABUS);
+};
+
+export const saveDetailedSubjects = (subjectsList) => {
+  setLocal('nqt_subjects_detailed', subjectsList);
+  return subjectsList;
+};
+
 export const getSubjectProgress = async () => {
+  const detailed = getDetailedSubjects();
+  const calculatedMap = {};
+  detailed.forEach((s) => {
+    calculatedMap[s.subject] = calculateSubjectProgressPct(s);
+  });
+
   if (isSupabaseConfigured) {
     const { data, error } = await supabase
       .from('subject_progress')
@@ -424,19 +555,33 @@ export const getSubjectProgress = async () => {
       .order('id', { ascending: true });
     if (error) throw error;
     if (!data || data.length === 0) {
-      // Auto seed
       await supabase.from('subject_progress').upsert(
-        DEFAULT_SUBJECTS.map((s) => ({ subject: s.subject, progress_percentage: s.progressPercentage })),
+        DEFAULT_SUBJECTS.map((s) => ({
+          subject: s.subject,
+          progress_percentage: calculatedMap[s.subject] ?? s.progressPercentage,
+        })),
         { onConflict: 'subject' }
       );
       return { data: DEFAULT_SUBJECTS };
     }
-    return { data: data.map(formatSubject) };
+    return {
+      data: data.map((d) => {
+        const fmt = formatSubject(d);
+        if (calculatedMap[fmt.subject] !== undefined) {
+          fmt.progressPercentage = calculatedMap[fmt.subject];
+        }
+        return fmt;
+      }),
+    };
   }
 
   // Fallback
   const subjects = getLocal(STORAGE_KEYS.SUBJECTS, DEFAULT_SUBJECTS);
-  return { data: subjects };
+  const synced = subjects.map((s) => ({
+    ...s,
+    progressPercentage: calculatedMap[s.subject] !== undefined ? calculatedMap[s.subject] : s.progressPercentage,
+  }));
+  return { data: synced };
 };
 
 export const updateSubjectProgress = async (id, progressPercentage) => {
@@ -462,6 +607,122 @@ export const updateSubjectProgress = async (id, progressPercentage) => {
   }
   return { data: { id, progressPercentage: pct } };
 };
+
+export const toggleSubjectTopic = async (subjectId, moduleId, topicId) => {
+  const list = getDetailedSubjects();
+  const subIdx = list.findIndex((s) => s.id === subjectId);
+  if (subIdx === -1) return { list, updatedPct: 0 };
+
+  const subject = list[subIdx];
+  const modIdx = (subject.modules || []).findIndex((m) => m.id === moduleId);
+  if (modIdx === -1) return { list, updatedPct: 0 };
+
+  const topicIdx = (subject.modules[modIdx].topics || []).findIndex((t) => t.id === topicId);
+  if (topicIdx === -1) return { list, updatedPct: 0 };
+
+  const currentVal = subject.modules[modIdx].topics[topicIdx].completed;
+  subject.modules[modIdx].topics[topicIdx].completed = !currentVal;
+
+  const newPct = calculateSubjectProgressPct(subject);
+  subject.progressPercentage = newPct;
+
+  list[subIdx] = subject;
+  saveDetailedSubjects(list);
+
+  try {
+    await updateSubjectProgress(subjectId, newPct);
+  } catch (err) {
+    console.debug('Failed to sync subject progress to DB', err);
+  }
+
+  return { list, updatedPct: newPct };
+};
+
+export const addSubjectTopic = (subjectId, moduleId, topicName) => {
+  const list = getDetailedSubjects();
+  const subIdx = list.findIndex((s) => s.id === subjectId);
+  if (subIdx === -1) return list;
+
+  const modIdx = (list[subIdx].modules || []).findIndex((m) => m.id === moduleId);
+  if (modIdx === -1) return list;
+
+  const newTopic = {
+    id: `custom_t_${Date.now()}`,
+    name: topicName.trim(),
+    completed: false,
+  };
+
+  list[subIdx].modules[modIdx].topics.push(newTopic);
+  saveDetailedSubjects(list);
+  return list;
+};
+
+export const deleteSubjectTopic = async (subjectId, moduleId, topicId) => {
+  const list = getDetailedSubjects();
+  const subIdx = list.findIndex((s) => s.id === subjectId);
+  if (subIdx === -1) return list;
+
+  const modIdx = (list[subIdx].modules || []).findIndex((m) => m.id === moduleId);
+  if (modIdx === -1) return list;
+
+  list[subIdx].modules[modIdx].topics = list[subIdx].modules[modIdx].topics.filter(
+    (t) => t.id !== topicId
+  );
+  const newPct = calculateSubjectProgressPct(list[subIdx]);
+  list[subIdx].progressPercentage = newPct;
+
+  saveDetailedSubjects(list);
+  try {
+    await updateSubjectProgress(subjectId, newPct);
+  } catch {}
+  return list;
+};
+
+export const createCustomSubject = (newSubject) => {
+  const list = getDetailedSubjects();
+  const id = Date.now();
+  const created = {
+    id,
+    subject: newSubject.subject || 'New Subject',
+    icon: newSubject.icon || 'BookOpen',
+    color: newSubject.color || 'from-blue-500 to-indigo-600',
+    accentColor: newSubject.accentColor || 'blue',
+    targetDate: newSubject.targetDate || '',
+    resources: newSubject.resources || [],
+    notes: newSubject.notes || '',
+    progressPercentage: 0,
+    modules: newSubject.modules && newSubject.modules.length > 0 ? newSubject.modules : [
+      {
+        id: `mod_${id}_1`,
+        name: '1. Core Topics',
+        topics: [
+          { id: `top_${id}_1`, name: 'Getting Started & Overview', completed: false },
+        ],
+      },
+    ],
+  };
+  list.push(created);
+  saveDetailedSubjects(list);
+  return list;
+};
+
+export const updateSubjectMetadata = (subjectId, updates) => {
+  const list = getDetailedSubjects();
+  const idx = list.findIndex((s) => s.id === subjectId);
+  if (idx !== -1) {
+    list[idx] = { ...list[idx], ...updates };
+    saveDetailedSubjects(list);
+  }
+  return list;
+};
+
+export const deleteCustomSubject = (subjectId) => {
+  const list = getDetailedSubjects();
+  const filtered = list.filter((s) => s.id !== subjectId);
+  saveDetailedSubjects(filtered);
+  return filtered;
+};
+
 
 // -------------------------------------------------------------
 // SCHEDULE
