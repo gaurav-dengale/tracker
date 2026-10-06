@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Pencil, Trash2, Check, Sparkles, RefreshCw } from 'lucide-react';
+import { Plus, Pencil, Trash2, Check, Sparkles, RefreshCw, Zap } from 'lucide-react';
 import { getTasks, createTask, updateTask, toggleTask, deleteTask, generateTasksFromSchedule } from '../api';
 import { getLocalDateString, formatIndianDate } from '../lib/dateUtils';
-import { triggerCelebration } from '../lib/confetti';
+import { triggerCelebration, triggerTaskCelebration } from '../lib/confetti';
 import TaskModal from '../components/TaskModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import ProgressBar from '../components/ProgressBar';
@@ -24,6 +24,7 @@ export default function TodaysTasks() {
   const [editingTask, setEditingTask] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [selectedDate, setSelectedDate] = useState(getLocalDateString());
+  const [recentlyCompletedId, setRecentlyCompletedId] = useState(null);
 
   const loadTasks = useCallback(async () => {
     setLoading(true);
@@ -66,13 +67,22 @@ export default function TodaysTasks() {
     }
   };
 
-  const handleToggle = async (id) => {
+  const handleToggle = async (task, e) => {
+    const isNowCompleting = !task.completed;
+    if (isNowCompleting) {
+      triggerTaskCelebration(e);
+      setRecentlyCompletedId(task.id);
+      setTimeout(() => {
+        setRecentlyCompletedId((prev) => (prev === task.id ? null : prev));
+      }, 1200);
+    }
+
     try {
-      const res = await toggleTask(id);
+      const res = await toggleTask(task.id);
       setTasks((prev) => {
-        const next = prev.map((t) => (t.id === id ? res.data : t));
+        const next = prev.map((t) => (t.id === task.id ? res.data : t));
         const allDone = next.length > 0 && next.every((t) => t.completed);
-        if (allDone) {
+        if (allDone && isNowCompleting) {
           triggerCelebration();
         }
         return next;
@@ -213,24 +223,30 @@ export default function TodaysTasks() {
             >
               {/* Checkbox */}
               <button
-                onClick={() => handleToggle(task.id)}
-                className={`mt-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                onClick={(e) => handleToggle(task, e)}
+                className={`mt-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all cursor-pointer ${
                   task.completed
                     ? 'border-green-500 bg-green-500 hover:bg-green-600'
-                    : 'border-gray-400 dark:border-gray-600 hover:border-primary-500'
-                }`}
+                    : 'border-gray-400 dark:border-gray-600 hover:border-primary-500 hover:scale-110 active:scale-95'
+                } ${task.completed && recentlyCompletedId === task.id ? 'animate-check-pop' : ''}`}
+                title={task.completed ? 'Mark as incomplete' : 'Mark as completed'}
               >
                 {task.completed && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
               </button>
 
               {/* Content */}
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 relative">
                 <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <span className={`text-sm font-semibold ${task.completed ? 'line-through text-gray-400' : 'text-gray-900 dark:text-white'}`}>
+                  <span className={`text-sm font-semibold transition-all ${task.completed ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-white'}`}>
                     {task.title}
                   </span>
                   {task.completed && (
                     <span className="text-xs text-green-600 dark:text-green-400 font-medium">✅ Completed</span>
+                  )}
+                  {recentlyCompletedId === task.id && (
+                    <span className="animate-xp-sparkle text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white shadow-md shadow-emerald-500/40 inline-flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-yellow-200" /> +15 XP! 🎉
+                    </span>
                   )}
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">

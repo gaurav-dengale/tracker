@@ -12,7 +12,7 @@ import {
 } from '../api';
 import { DSA_TOPICS, DSA_PROBLEMS } from '../data/dsaSheetData';
 import { playSuccessChime, playChime } from '../lib/soundUtils';
-import { triggerCelebration } from '../lib/confetti';
+import { triggerCelebration, triggerTaskCelebration } from '../lib/confetti';
 import ProgressBar from '../components/ProgressBar';
 import AiStudyTutor from '../components/AiStudyTutor';
 
@@ -117,7 +117,7 @@ export default function DsaTracker() {
     setSolvedIds(res.solvedIds);
 
     if (res.isSolved) {
-      playSuccessChime();
+      triggerTaskCelebration(e);
       // Check if this topic reached 100%
       const prob = DSA_PROBLEMS.find((p) => p.id === problemId);
       if (prob) {

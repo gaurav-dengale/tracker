@@ -72,3 +72,31 @@ export function playSuccessChime() {
     console.debug('Audio play failed', e);
   }
 }
+
+// Crisp upbeat pop chime for single task check
+export function playTaskCheckSound() {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    const notes = [523.25, 659.25, 1046.50]; // C5, E5, C6
+    notes.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.07);
+
+      gain.gain.setValueAtTime(0.22, ctx.currentTime + idx * 0.07);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.07 + 0.4);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(ctx.currentTime + idx * 0.07);
+      osc.stop(ctx.currentTime + idx * 0.07 + 0.42);
+    });
+  } catch (e) {
+    console.debug('Audio play failed', e);
+  }
+}

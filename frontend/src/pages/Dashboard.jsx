@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  CalendarDays, CheckCircle2, BookOpen, ChevronRight, Sparkles, Flame, Zap, ArrowRight
+  CalendarDays, CheckCircle2, BookOpen, ChevronRight, Sparkles, Flame, Zap, ArrowRight, Check
 } from 'lucide-react';
-import { getTasks, getDsaProgress, getSubjectProgress, getSchedule, generateTasksFromSchedule } from '../api';
+import { getTasks, getDsaProgress, getSubjectProgress, getSchedule, generateTasksFromSchedule, toggleTask } from '../api';
 import { getLocalDateString, formatIndianDate } from '../lib/dateUtils';
 import { getActiveScheduleItem } from '../lib/timeUtils';
 import { calculateStreak } from '../lib/streakUtils';
-import { triggerCelebration } from '../lib/confetti';
+import { triggerCelebration, triggerTaskCelebration } from '../lib/confetti';
 import ProgressBar from '../components/ProgressBar';
 import DailyExamTip from '../components/DailyExamTip';
 import PreparationMilestones from '../components/PreparationMilestones';
@@ -40,6 +40,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [celebrated, setCelebrated] = useState(false);
+  const [recentlyCompletedId, setRecentlyCompletedId] = useState(null);
 
   const today = getLocalDateString();
   const daysRemaining = getDaysRemaining();
@@ -79,6 +80,32 @@ export default function Dashboard() {
     }, 60000);
     return () => clearInterval(interval);
   }, [today]);
+
+  const handleToggleTask = async (task, e) => {
+    const isNowCompleting = !task.completed;
+    if (isNowCompleting) {
+      triggerTaskCelebration(e);
+      setRecentlyCompletedId(task.id);
+      setTimeout(() => {
+        setRecentlyCompletedId((prev) => (prev === task.id ? null : prev));
+      }, 1200);
+    }
+
+    try {
+      const res = await toggleTask(task.id);
+      setTodayTasks((prev) => {
+        const next = prev.map((t) => (t.id === task.id ? res.data : t));
+        const allDone = next.length > 0 && next.every((t) => t.completed);
+        if (allDone && isNowCompleting) {
+          triggerCelebration();
+        }
+        return next;
+      });
+      setAllTasks((prev) => prev.map((t) => (t.id === task.id ? res.data : t)));
+    } catch (err) {
+      console.error('Error toggling task', err);
+    }
+  };
 
   const handleAutoGenerate = async () => {
     setGenerating(true);
@@ -283,25 +310,33 @@ export default function Dashboard() {
                   className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
                     task.completed
                       ? 'bg-green-50/50 dark:bg-green-950/20 opacity-75'
-                      : 'bg-gray-50 dark:bg-gray-800/70 border border-transparent dark:border-gray-800'
+                      : 'bg-gray-50 dark:bg-gray-800/70 border border-transparent dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
                   }`}
                 >
-                  <div
-                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                  <button
+                    type="button"
+                    onClick={(e) => handleToggleTask(task, e)}
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all cursor-pointer ${
                       task.completed
                         ? 'border-green-500 bg-green-500'
-                        : 'border-gray-400 dark:border-gray-600'
-                    }`}
+                        : 'border-gray-400 dark:border-gray-600 hover:border-primary-500 hover:scale-110 active:scale-95'
+                    } ${task.completed && recentlyCompletedId === task.id ? 'animate-check-pop' : ''}`}
+                    title={task.completed ? 'Mark incomplete' : 'Complete task'}
                   >
                     {task.completed && (
-                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
+                      <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                    )}
+                  </button>
+                  <div className="flex-1 min-w-0 relative flex items-center gap-2">
+                    <span className={`text-sm flex-1 ${task.completed ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-200'}`}>
+                      {task.title}
+                    </span>
+                    {recentlyCompletedId === task.id && (
+                      <span className="animate-xp-sparkle text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white shadow-md shadow-emerald-500/30 inline-flex items-center gap-1 flex-shrink-0">
+                        <Sparkles className="w-3 h-3 text-yellow-200" /> +15 XP! 🎉
+                      </span>
                     )}
                   </div>
-                  <span className={`text-sm flex-1 ${task.completed ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-200'}`}>
-                    {task.title}
-                  </span>
                   <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${pConfig.color}`}>
                     {pConfig.label}
                   </span>
