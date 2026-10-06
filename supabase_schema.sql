@@ -74,18 +74,21 @@ ON CONFLICT (subject) DO NOTHING;
 -- Seed Default Daily Routine Schedule
 INSERT INTO public.schedule_items (time_slot, activity, sort_order)
 VALUES 
-    ('7:00 – 7:30 AM', 'Wake up + Freshen up', 1),
-    ('7:30 – 9:30 AM', 'Striver DSA', 2),
-    ('9:30 – 10:00 AM', 'Breakfast / Break', 3),
-    ('10:00 AM – 12:00 PM', 'TCS NQT Aptitude', 4),
-    ('12:00 – 12:30 PM', 'Break', 5),
-    ('12:30 – 2:30 PM', 'Development', 6),
-    ('2:30 – 3:00 PM', 'Lunch', 7),
-    ('3:00 – 4:00 PM', 'Coding / NQT Coding Practice', 8),
-    ('4:00 – 4:30 PM', 'Communication', 9),
-    ('4:30 – 5:00 PM', 'Break / Get Ready', 10),
-    ('5:00 – 7:30 PM', 'Gym', 11),
-    ('7:30 – 8:00 PM', 'Dinner', 12),
-    ('8:00 – 9:00 PM', 'Revision', 13),
-    ('9:00 – 9:45 PM', 'Interview Preparation', 14)
+    ('7:00 – 7:30 AM', '🌅 Wake up + Freshen up', 1),
+    ('7:30 – 10:30 AM', '💻 Striver DSA', 2),
+    ('10:30 AM – 12:00 PM', '🧠 TCS NQT Aptitude', 3),
+    ('12:00 – 12:30 PM', '🍛 Lunch + Break', 4),
+    ('12:30 – 2:30 PM', '🚀 Development — Java + Spring Boot', 5),
+    ('2:30 – 3:30 PM', '🧩 NQT Coding / Coding Practice', 6),
+    ('3:30 – 4:00 PM', '🗣️ Communication / Spoken English', 7),
+    ('4:00 – 4:30 PM', '☕ Break + Get Ready', 8),
+    ('4:30 – 6:30 PM', '🏋️ Gym', 9),
+    ('6:30 – 7:00 PM', '🚿 Freshen up / Relax', 10),
+    ('7:00 – 8:00 PM', '⚛️ React', 11),
+    ('8:00 – 8:30 PM', '🍽️ Dinner', 12),
+    ('8:30 – 9:30 PM', '🔄 Revision', 13),
+    ('9:30 – 10:15 PM', '🎯 Interview Preparation', 14),
+    ('10:15 – 10:30 PM', '☕ Break', 15),
+    ('10:30 – 11:30 PM', '⚛️ React — Practice / Project', 16),
+    ('11:30 PM – 12:00 AM', '🏗️ System Design', 17)
 ON CONFLICT DO NOTHING;

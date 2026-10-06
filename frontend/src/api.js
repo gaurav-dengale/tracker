@@ -81,21 +81,24 @@ const STORAGE_KEYS = {
   SCHEDULE: 'nqt_schedule_local',
 };
 
-const DEFAULT_SCHEDULE = [
-  { id: 1, timeSlot: '7:00 – 7:30 AM', activity: 'Wake up + Freshen up', sortOrder: 1 },
-  { id: 2, timeSlot: '7:30 – 9:30 AM', activity: 'Striver DSA', sortOrder: 2 },
-  { id: 3, timeSlot: '9:30 – 10:00 AM', activity: 'Breakfast / Break', sortOrder: 3 },
-  { id: 4, timeSlot: '10:00 AM – 12:00 PM', activity: 'TCS NQT Aptitude', sortOrder: 4 },
-  { id: 5, timeSlot: '12:00 – 12:30 PM', activity: 'Break', sortOrder: 5 },
-  { id: 6, timeSlot: '12:30 – 2:30 PM', activity: 'Development', sortOrder: 6 },
-  { id: 7, timeSlot: '2:30 – 3:00 PM', activity: 'Lunch', sortOrder: 7 },
-  { id: 8, timeSlot: '3:00 – 4:00 PM', activity: 'Coding / NQT Coding Practice', sortOrder: 8 },
-  { id: 9, timeSlot: '4:00 – 4:30 PM', activity: 'Communication', sortOrder: 9 },
-  { id: 10, timeSlot: '4:30 – 5:00 PM', activity: 'Break / Get Ready', sortOrder: 10 },
-  { id: 11, timeSlot: '5:00 – 7:30 PM', activity: 'Gym', sortOrder: 11 },
-  { id: 12, timeSlot: '7:30 – 8:00 PM', activity: 'Dinner', sortOrder: 12 },
-  { id: 13, timeSlot: '8:00 – 9:00 PM', activity: 'Revision', sortOrder: 13 },
-  { id: 14, timeSlot: '9:00 – 9:45 PM', activity: 'Interview Preparation', sortOrder: 14 },
+export const DEFAULT_SCHEDULE = [
+  { id: 1, timeSlot: '7:00 – 7:30 AM', activity: '🌅 Wake up + Freshen up', sortOrder: 1 },
+  { id: 2, timeSlot: '7:30 – 10:30 AM', activity: '💻 Striver DSA', sortOrder: 2 },
+  { id: 3, timeSlot: '10:30 AM – 12:00 PM', activity: '🧠 TCS NQT Aptitude', sortOrder: 3 },
+  { id: 4, timeSlot: '12:00 – 12:30 PM', activity: '🍛 Lunch + Break', sortOrder: 4 },
+  { id: 5, timeSlot: '12:30 – 2:30 PM', activity: '🚀 Development — Java + Spring Boot', sortOrder: 5 },
+  { id: 6, timeSlot: '2:30 – 3:30 PM', activity: '🧩 NQT Coding / Coding Practice', sortOrder: 6 },
+  { id: 7, timeSlot: '3:30 – 4:00 PM', activity: '🗣️ Communication / Spoken English', sortOrder: 7 },
+  { id: 8, timeSlot: '4:00 – 4:30 PM', activity: '☕ Break + Get Ready', sortOrder: 8 },
+  { id: 9, timeSlot: '4:30 – 6:30 PM', activity: '🏋️ Gym', sortOrder: 9 },
+  { id: 10, timeSlot: '6:30 – 7:00 PM', activity: '🚿 Freshen up / Relax', sortOrder: 10 },
+  { id: 11, timeSlot: '7:00 – 8:00 PM', activity: '⚛️ React', sortOrder: 11 },
+  { id: 12, timeSlot: '8:00 – 8:30 PM', activity: '🍽️ Dinner', sortOrder: 12 },
+  { id: 13, timeSlot: '8:30 – 9:30 PM', activity: '🔄 Revision', sortOrder: 13 },
+  { id: 14, timeSlot: '9:30 – 10:15 PM', activity: '🎯 Interview Preparation', sortOrder: 14 },
+  { id: 15, timeSlot: '10:15 – 10:30 PM', activity: '☕ Break', sortOrder: 15 },
+  { id: 16, timeSlot: '10:30 – 11:30 PM', activity: '⚛️ React — Practice / Project', sortOrder: 16 },
+  { id: 17, timeSlot: '11:30 PM – 12:00 AM', activity: '🏗️ System Design', sortOrder: 17 },
 ];
 
 const DEFAULT_SUBJECTS = [
@@ -303,15 +306,18 @@ export const deleteTask = async (id) => {
 export const generateTasksFromSchedule = async (date) => {
   const targetDate = date || getLocalDateString();
   
-  // Standard routine mapping with priority assignments
+  // Standard routine mapping with priority assignments based on Master Daily Routine
   const routineTasks = [
-    { title: 'Striver DSA', subject: 'DSA / Striver', priority: 'HIGH', plannedDuration: '2 hours', notes: '7:30 – 9:30 AM' },
-    { title: 'TCS NQT Aptitude', subject: 'TCS NQT Aptitude', priority: 'HIGH', plannedDuration: '2 hours', notes: '10:00 AM – 12:00 PM' },
-    { title: 'Development', subject: 'Development', priority: 'MEDIUM', plannedDuration: '2 hours', notes: '12:30 – 2:30 PM' },
-    { title: 'Coding Practice', subject: 'Coding Practice', priority: 'HIGH', plannedDuration: '1 hour', notes: '3:00 – 4:00 PM' },
-    { title: 'Communication Practice', subject: 'Communication', priority: 'LOW', plannedDuration: '30 mins', notes: '4:00 – 4:30 PM' },
-    { title: 'Daily Revision', subject: 'Interview Preparation', priority: 'MEDIUM', plannedDuration: '1 hour', notes: '8:00 – 9:00 PM' },
-    { title: 'Interview Preparation', subject: 'Interview Preparation', priority: 'HIGH', plannedDuration: '45 mins', notes: '9:00 – 9:45 PM' },
+    { title: '💻 Striver DSA Sheet', subject: 'DSA / Striver', priority: 'HIGH', plannedDuration: '3 hours', notes: '7:30 – 10:30 AM' },
+    { title: '🧠 TCS NQT Aptitude', subject: 'TCS NQT Aptitude', priority: 'HIGH', plannedDuration: '1.5 hours', notes: '10:30 AM – 12:00 PM' },
+    { title: '🚀 Development — Java + Spring Boot', subject: 'Development', priority: 'HIGH', plannedDuration: '2 hours', notes: '12:30 – 2:30 PM' },
+    { title: '🧩 NQT Coding / Coding Practice', subject: 'Coding Practice', priority: 'HIGH', plannedDuration: '1 hour', notes: '2:30 – 3:30 PM' },
+    { title: '🗣️ Communication / Spoken English', subject: 'Communication', priority: 'LOW', plannedDuration: '30 mins', notes: '3:30 – 4:00 PM' },
+    { title: '⚛️ React Theory & Concepts', subject: 'Development', priority: 'MEDIUM', plannedDuration: '1 hour', notes: '7:00 – 8:00 PM' },
+    { title: '🔄 Daily Revision', subject: 'Interview Preparation', priority: 'MEDIUM', plannedDuration: '1 hour', notes: '8:30 – 9:30 PM' },
+    { title: '🎯 Interview Preparation & Core CS', subject: 'Interview Preparation', priority: 'HIGH', plannedDuration: '45 mins', notes: '9:30 – 10:15 PM' },
+    { title: '⚛️ React — Practice / Project', subject: 'Development', priority: 'HIGH', plannedDuration: '1 hour', notes: '10:30 – 11:30 PM' },
+    { title: '🏗️ System Design Basics', subject: 'DSA / Striver', priority: 'MEDIUM', plannedDuration: '30 mins', notes: '11:30 PM – 12:00 AM' },
   ];
 
   if (isSupabaseConfigured) {
@@ -822,3 +828,28 @@ export const deleteScheduleItem = async (id) => {
   setLocal(STORAGE_KEYS.SCHEDULE, schedule.filter((s) => s.id !== id));
   return { data: true };
 };
+
+export const resetScheduleToMaster = async () => {
+  if (isSupabaseConfigured) {
+    try {
+      // Delete existing
+      await supabase.from('schedule_items').delete().neq('id', 0);
+      // Insert master default schedule
+      const toInsert = DEFAULT_SCHEDULE.map((s) => ({
+        time_slot: s.timeSlot,
+        activity: s.activity,
+        sort_order: s.sortOrder,
+      }));
+      const { data, error } = await supabase.from('schedule_items').insert(toInsert).select();
+      if (error) throw error;
+      return { data: (data || []).map(formatSchedule) };
+    } catch (e) {
+      console.warn('Supabase reset failed, falling back to local', e);
+    }
+  }
+
+  // Fallback
+  setLocal(STORAGE_KEYS.SCHEDULE, DEFAULT_SCHEDULE);
+  return { data: DEFAULT_SCHEDULE };
+};
+

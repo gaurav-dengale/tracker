@@ -34,10 +34,14 @@ export function parseSlotRange(timeSlotStr) {
     ? 'PM'
     : endMeridiem;
 
-  const startMinutes = parseTimeToMinutes(parts[0], startMeridiem);
-  const endMinutes = parseTimeToMinutes(parts[1], endMeridiem);
+  let startMinutes = parseTimeToMinutes(parts[0], startMeridiem);
+  let endMinutes = parseTimeToMinutes(parts[1], endMeridiem);
 
   if (startMinutes === null || endMinutes === null) return null;
+  // Handle midnight end of day rollover (e.g. 11:30 PM – 12:00 AM)
+  if (endMinutes === 0 && startMinutes > 720) {
+    endMinutes = 1440;
+  }
   return { startMinutes, endMinutes };
 }
 

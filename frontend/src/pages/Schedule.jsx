@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, Save, X, Clock, Radio, Sparkles } from 'lucide-react';
+import { Plus, Pencil, Trash2, Save, X, Clock, Radio, Sparkles, RotateCcw } from 'lucide-react';
 import {
-  getSchedule, createScheduleItem, updateScheduleItem, deleteScheduleItem,
+  getSchedule, createScheduleItem, updateScheduleItem, deleteScheduleItem, resetScheduleToMaster,
 } from '../api';
 import { isSlotActiveNow } from '../lib/timeUtils';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -15,6 +15,8 @@ export default function Schedule() {
   const [addingNew, setAddingNew] = useState(false);
   const [newForm, setNewForm] = useState({ timeSlot: '', activity: '', sortOrder: 99 });
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [resetConfirm, setResetConfirm] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   useEffect(() => {
     getSchedule()
@@ -22,8 +24,15 @@ export default function Schedule() {
       .catch(console.error)
       .finally(() => setLoading(false));
 
-    const timer = setInterval(() => setCurrentTime(new Date()), 30000);
-    return () => clearInterval(timer);
+    const timer = setInterval(() => setCurrentTime(new Date()), 15000);
+    const handleVis = () => {
+      if (document.visibilityState === 'visible') setCurrentTime(new Date());
+    };
+    document.addEventListener('visibilitychange', handleVis);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', handleVis);
+    };
   }, []);
 
   const startEdit = (item) => {
@@ -63,20 +72,42 @@ export default function Schedule() {
     }
   };
 
+  const handleResetMaster = async () => {
+    setResetting(true);
+    try {
+      const res = await resetScheduleToMaster();
+      setItems(res.data);
+      setResetConfirm(false);
+    } catch (err) {
+      console.error('Error resetting schedule', err);
+    } finally {
+      setResetting(false);
+    }
+  };
+
   if (loading) {
     return <div className="text-center py-16 text-gray-400 text-sm">Loading schedule...</div>;
   }
 
   return (
     <div className="space-y-5 max-w-2xl mx-auto">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Daily Schedule</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Your default study routine</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Your 17-slot master study & routine schedule</p>
         </div>
-        <button className="btn-primary" onClick={() => setAddingNew(true)}>
-          <Plus className="w-4 h-4" /> Add Slot
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            className="btn-secondary text-xs"
+            onClick={() => setResetConfirm(true)}
+            title="Reset to default Master Routine"
+          >
+            <RotateCcw className="w-3.5 h-3.5" /> Reset to Master
+          </button>
+          <button className="btn-primary" onClick={() => setAddingNew(true)}>
+            <Plus className="w-4 h-4" /> Add Slot
+          </button>
+        </div>
       </div>
 
       {/* Add new form */}
@@ -217,6 +248,16 @@ export default function Schedule() {
           message={`Delete "${deleteConfirm.activity}" from the schedule?`}
           onConfirm={() => handleDelete(deleteConfirm.id)}
           onCancel={() => setDeleteConfirm(null)}
+        />
+      )}
+
+      {resetConfirm && (
+        <ConfirmDialog
+          title="Reset to Master Daily Routine?"
+          message="This will reset your daily schedule to the authentic 17-slot routine (7:00 AM – 12:00 AM) with Striver DSA, TCS NQT Aptitude, Java+Spring Boot, React, Coding, Revision, Gym, and System Design."
+          confirmLabel={resetting ? 'Resetting...' : 'Yes, Load Master Routine'}
+          onConfirm={handleResetMaster}
+          onCancel={() => setResetConfirm(false)}
         />
       )}
     </div>
