@@ -21,6 +21,8 @@ import {
 import { useAuth } from '../context/AuthContext';
 import PomodoroTimer from './PomodoroTimer';
 import Scratchpad from './Scratchpad';
+import AiStudyTutor from './AiStudyTutor';
+import { Bot, Sparkles } from 'lucide-react';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -36,6 +38,7 @@ export default function Layout({ children, darkMode, setDarkMode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pomodoroOpen, setPomodoroOpen] = useState(false);
   const [scratchpadOpen, setScratchpadOpen] = useState(false);
+  const [aiTutorOpen, setAiTutorOpen] = useState(false);
   const { user, signOut } = useAuth();
 
   return (
@@ -138,6 +141,17 @@ export default function Layout({ children, darkMode, setDarkMode }) {
 
           <div className="flex-1" />
 
+          {/* AI Study Tutor Topbar Button */}
+          <button
+            onClick={() => setAiTutorOpen(true)}
+            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm shadow-purple-500/20 transition-all hover:scale-[1.02]"
+            title="Open TCS NQT & DSA AI Study Mentor"
+          >
+            <Bot className="w-4 h-4" />
+            <span className="hidden sm:inline">Ask AI Mentor</span>
+            <Sparkles className="w-3 h-3 text-yellow-300" />
+          </button>
+
           {/* Quick Focus Pomodoro Timer Button */}
           <button
             onClick={() => setPomodoroOpen(true)}
@@ -174,8 +188,10 @@ export default function Layout({ children, darkMode, setDarkMode }) {
       </div>
 
       {/* Global Overlays */}
+      <AiStudyTutor isOpen={aiTutorOpen} onClose={() => setAiTutorOpen(false)} />
       <PomodoroTimer isOpen={pomodoroOpen} onClose={() => setPomodoroOpen(false)} />
       <Scratchpad isOpen={scratchpadOpen} onClose={() => setScratchpadOpen(false)} />
     </div>
   );
 }
+

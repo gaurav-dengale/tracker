@@ -3,7 +3,7 @@ import {
   BarChart2, BookOpen, Brain, Code2, Terminal, Laptop,
   MessageSquare, Award, Plus, CheckCircle2, Circle, Trash2,
   Edit2, Save, X, ExternalLink, Calendar, ChevronDown, ChevronUp,
-  Sparkles, Layers, Sliders, ListChecks, HelpCircle
+  Sparkles, Layers, Sliders, ListChecks, HelpCircle, Bot
 } from 'lucide-react';
 import {
   getDetailedSubjects, toggleSubjectTopic, addSubjectTopic,
@@ -13,6 +13,7 @@ import {
 import { playSuccessChime, playChime } from '../lib/soundUtils';
 import { triggerCelebration } from '../lib/confetti';
 import ProgressBar from '../components/ProgressBar';
+import AiStudyTutor from '../components/AiStudyTutor';
 
 const ICONS_MAP = {
   Brain, Code2, Terminal, Laptop, MessageSquare, Award, BookOpen, Sparkles, Layers,
@@ -54,6 +55,9 @@ export default function Subjects() {
 
   // New topic input per module state: { [`${subjectId}_${moduleId}`]: string }
   const [newTopicInputs, setNewTopicInputs] = useState({});
+
+  // AI Tutor Modal state
+  const [aiSubjectContext, setAiSubjectContext] = useState(null);
 
   useEffect(() => {
     const list = getDetailedSubjects();
@@ -362,6 +366,20 @@ export default function Subjects() {
                   </div>
 
                   <div className="flex items-center gap-1">
+                    <button
+                      onClick={() =>
+                        setAiSubjectContext({
+                          type: 'subject',
+                          subject: `${subject.subject} (TCS NQT Prep)`,
+                        })
+                      }
+                      className="px-2 py-1 rounded-lg text-xs font-semibold bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/50 flex items-center gap-1 border border-purple-200/60 dark:border-purple-800/40 transition-all mr-1"
+                      title="Ask AI for shortcuts & formulas"
+                    >
+                      <Bot className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                      <span className="hidden sm:inline">AI Tutor</span>
+                    </button>
+
                     <button
                       onClick={() => setEditingSubject({ ...subject })}
                       className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
@@ -732,6 +750,14 @@ export default function Subjects() {
           </div>
         </div>
       )}
+
+      {/* AI Study Tutor Modal */}
+      <AiStudyTutor
+        isOpen={Boolean(aiSubjectContext)}
+        onClose={() => setAiSubjectContext(null)}
+        initialContext={aiSubjectContext}
+      />
     </div>
   );
 }
+

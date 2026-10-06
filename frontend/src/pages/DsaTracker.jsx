@@ -3,7 +3,7 @@ import {
   BookOpen, Save, Search, Star, ExternalLink, CheckCircle2, Circle,
   Clock, Flame, Filter, ChevronDown, ChevronUp, StickyNote, Plus,
   Sparkles, Layers, FileText, GitCommit, Repeat, Database,
-  Maximize2, GitFork, Share2, Cpu, Award, X, Play, RotateCcw
+  Maximize2, GitFork, Share2, Cpu, Award, X, Play, RotateCcw, Bot
 } from 'lucide-react';
 import {
   getDsaProgress, updateDsaProgress, updateDsaTargetHours,
@@ -14,6 +14,7 @@ import { DSA_TOPICS, DSA_PROBLEMS } from '../data/dsaSheetData';
 import { playSuccessChime, playChime } from '../lib/soundUtils';
 import { triggerCelebration } from '../lib/confetti';
 import ProgressBar from '../components/ProgressBar';
+import AiStudyTutor from '../components/AiStudyTutor';
 
 const ICONS = {
   Sparkles, Layers, Search, FileText, GitCommit, Repeat,
@@ -60,6 +61,9 @@ export default function DsaTracker() {
   const [showSessionModal, setShowSessionModal] = useState(false);
   const [sessionForm, setSessionForm] = useState({ durationHours: 1.5, topic: 'Arrays (Two Pointers)', notes: '' });
   const [showSessionsList, setShowSessionsList] = useState(false);
+
+  // AI Tutor Modal state
+  const [aiModalContext, setAiModalContext] = useState(null);
 
   useEffect(() => {
     Promise.all([getDsaProgress()])
@@ -717,8 +721,26 @@ export default function DsaTracker() {
                             </div>
                           </div>
 
-                          {/* Actions: Notes, Star, Link */}
-                          <div className="flex items-center gap-2 flex-shrink-0">
+                          {/* Actions: Ask AI, Notes, Star, Link */}
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            {/* Ask AI Button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setAiModalContext({
+                                  type: 'dsa',
+                                  title: problem.title,
+                                  topic: topic.name,
+                                  difficulty: problem.difficulty,
+                                });
+                              }}
+                              className="px-2 py-1 rounded-lg text-xs font-semibold bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/50 flex items-center gap-1 border border-purple-200/60 dark:border-purple-800/40 transition-all"
+                              title="Ask AI for progressive hints & logic"
+                            >
+                              <Bot className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                              <span className="hidden sm:inline">Hint</span>
+                            </button>
+
                             {/* Notes Icon */}
                             <button
                               onClick={(e) => openNoteModal(problem, e)}
@@ -758,6 +780,7 @@ export default function DsaTracker() {
                               </a>
                             )}
                           </div>
+
                         </div>
                       );
                     })
@@ -915,6 +938,14 @@ export default function DsaTracker() {
           </div>
         </div>
       )}
+
+      {/* AI Study Tutor Modal */}
+      <AiStudyTutor
+        isOpen={Boolean(aiModalContext)}
+        onClose={() => setAiModalContext(null)}
+        initialContext={aiModalContext}
+      />
     </div>
   );
 }
+
