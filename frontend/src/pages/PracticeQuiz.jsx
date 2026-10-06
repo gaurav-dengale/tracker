@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Brain,
   Calculator,
@@ -39,6 +39,8 @@ export default function PracticeQuiz() {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [quizHistory, setQuizHistory] = useState([]);
   const [userXp, setUserXp] = useState(getUserXp());
+  const targetEndTimeRef = useRef(null);
+  const timerRef = useRef(null);
 
   const categoryData = NQT_QUIZ_DATA[selectedCategory] || NQT_QUIZ_DATA.numerical;
   const questions = categoryData.questions || [];
@@ -49,23 +51,47 @@ export default function PracticeQuiz() {
     setQuizHistory(getQuizHistory());
   }, []);
 
-  // Timer countdown in test mode
+  // Timer countdown in test mode with timestamp-based precision & tab switch sync
   useEffect(() => {
-    let timer = null;
-    if (isTimerRunning && timeLeft > 0 && !quizCompleted) {
-      timer = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            handleSubmitQuiz();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+    if (!isTimerRunning || quizCompleted) {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      return;
     }
-    return () => clearInterval(timer);
-  }, [isTimerRunning, timeLeft, quizCompleted]);
+
+    const checkTime = () => {
+      if (!targetEndTimeRef.current) return;
+      const remaining = Math.max(0, Math.ceil((targetEndTimeRef.current - Date.now()) / 1000));
+      setTimeLeft(remaining);
+
+      if (remaining <= 0) {
+        if (timerRef.current) clearInterval(timerRef.current);
+        timerRef.current = null;
+        targetEndTimeRef.current = null;
+        handleSubmitQuiz();
+      }
+    };
+
+    checkTime();
+    timerRef.current = setInterval(checkTime, 500);
+
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible' || !document.hidden) {
+        checkTime();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+    window.addEventListener('focus', handleVisibilityOrFocus);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+    };
+  }, [isTimerRunning, quizCompleted]);
 
   const startQuiz = (categoryKey, mode = 'test') => {
     setSelectedCategory(categoryKey);
@@ -76,7 +102,14 @@ export default function PracticeQuiz() {
     setQuizCompleted(false);
     setScoreResult(null);
     setTimeLeft(300);
-    setIsTimerRunning(mode === 'test');
+
+    if (mode === 'test') {
+      targetEndTimeRef.current = Date.now() + 300 * 1000;
+      setIsTimerRunning(true);
+    } else {
+      targetEndTimeRef.current = null;
+      setIsTimerRunning(false);
+    }
   };
 
   const handleSelectOption = (index) => {

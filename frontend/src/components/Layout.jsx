@@ -41,6 +41,17 @@ export default function Layout({ children, darkMode, setDarkMode }) {
   const [aiTutorOpen, setAiTutorOpen] = useState(false);
   const { user, signOut } = useAuth();
 
+  useState(() => {
+    // Keep reference in sync
+  });
+
+  // Listen to open-pomodoro event triggered by minimized widget
+  useEffect(() => {
+    const handleOpenPomodoro = () => setPomodoroOpen(true);
+    window.addEventListener('open-pomodoro', handleOpenPomodoro);
+    return () => window.removeEventListener('open-pomodoro', handleOpenPomodoro);
+  }, []);
+
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Mobile overlay */}
