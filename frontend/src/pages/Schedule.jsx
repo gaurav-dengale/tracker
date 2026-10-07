@@ -155,14 +155,18 @@ export default function Schedule() {
       {/* Schedule list */}
       <div className="card divide-y divide-gray-200 dark:divide-gray-800 overflow-hidden">
         {items.map((item) => {
-          const { isActive, minutesRemaining } = isSlotActiveNow(item.timeSlot, currentTime);
+          const { isActive, minutesRemaining, startMinutes, endMinutes } = isSlotActiveNow(item.timeSlot, currentTime);
+          const totalDuration = startMinutes && endMinutes ? Math.max(1, endMinutes - startMinutes) : 0;
+          const elapsedMinutes = totalDuration ? Math.max(0, totalDuration - minutesRemaining) : 0;
+          const progressPct = totalDuration ? Math.min(100, Math.max(0, Math.round((elapsedMinutes / totalDuration) * 100))) : 0;
+
           return (
             <div
               key={item.id}
-              className={`px-5 py-4 transition-colors ${
+              className={`px-5 py-4 transition-all duration-300 relative ${
                 isActive
-                  ? 'bg-primary-50/70 dark:bg-primary-950/40 border-l-4 border-l-primary-500'
-                  : ''
+                  ? 'bg-gradient-to-r from-primary-500/10 via-indigo-500/15 to-purple-500/10 dark:from-primary-950/70 dark:via-indigo-950/60 dark:to-purple-950/70 border-l-4 border-l-primary-500 shadow-inner'
+                  : 'hover:bg-gray-50/70 dark:hover:bg-gray-800/30'
               }`}
             >
               {editingId === item.id ? (
@@ -206,34 +210,65 @@ export default function Schedule() {
                 </div>
               ) : (
                 /* View mode */
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2 flex-shrink-0 w-44">
-                    <Clock className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-primary-500 animate-pulse' : 'text-gray-400'}`} />
-                    <span className={`text-xs font-semibold ${isActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-700 dark:text-gray-300'}`}>
-                      {item.timeSlot}
-                    </span>
-                  </div>
-                  <div className="flex-1 flex flex-wrap items-center gap-2">
-                    <span className={`text-sm font-medium ${isActive ? 'text-primary-950 dark:text-white font-bold' : 'text-gray-700 dark:text-gray-300'}`}>
-                      {item.activity}
-                    </span>
-                    {isActive && (
-                      <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30 flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping" />
-                        Active Now {minutesRemaining > 0 && `(${minutesRemaining}m left)`}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-shrink-0 w-36 sm:w-44">
+                      {isActive ? (
+                        <div className="relative flex h-3 w-3 flex-shrink-0">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
+                        </div>
+                      ) : (
+                        <Clock className="w-3.5 h-3.5 flex-shrink-0 text-gray-400 dark:text-gray-500" />
+                      )}
+                      <span className={`text-xs ${isActive ? 'text-primary-600 dark:text-primary-400 font-bold' : 'text-gray-600 dark:text-gray-400 font-medium'}`}>
+                        {item.timeSlot}
                       </span>
-                    )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`text-sm ${isActive ? 'text-gray-900 dark:text-white font-bold text-[15px]' : 'text-gray-800 dark:text-gray-200 font-medium'}`}>
+                          {item.activity}
+                        </span>
+                        {isActive && (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            Active Now · {minutesRemaining > 0 ? `${minutesRemaining}m left` : '< 1m left'}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Live Slot Micro Progress Bar */}
+                      {isActive && totalDuration > 0 && (
+                        <div className="mt-2 flex items-center gap-2.5 max-w-xs">
+                          <div className="flex-1 h-1.5 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-primary-500 transition-all duration-500"
+                              style={{ width: `${progressPct}%` }}
+                            />
+                          </div>
+                          <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                            {progressPct}% ({elapsedMinutes}m / {totalDuration}m)
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex gap-1 flex-shrink-0">
+
+                  {/* Actions */}
+                  <div className="flex gap-1 flex-shrink-0 self-end sm:self-center">
                     <button
                       onClick={() => startEdit(item)}
-                      className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                      title="Edit slot"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => setDeleteConfirm(item)}
-                      className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500"
+                      className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-colors"
+                      title="Delete slot"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

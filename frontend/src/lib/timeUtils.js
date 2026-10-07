@@ -61,9 +61,9 @@ export function isSlotActiveNow(timeSlotStr, now = new Date()) {
 export function getActiveScheduleItem(items, now = new Date()) {
   if (!items || !items.length) return null;
   for (const item of items) {
-    const { isActive, minutesRemaining } = isSlotActiveNow(item.timeSlot, now);
+    const { isActive, minutesRemaining, startMinutes, endMinutes } = isSlotActiveNow(item.timeSlot, now);
     if (isActive) {
-      return { ...item, minutesRemaining };
+      return { ...item, minutesRemaining, startMinutes, endMinutes };
     }
   }
   return null;

@@ -193,35 +193,75 @@ export default function Dashboard() {
       <DailyExamTip />
 
       {/* Live Active Schedule Slot Banner */}
-      {activeSlot && (
-        <div className="card p-4 bg-gradient-to-r from-blue-900/20 via-indigo-900/20 to-purple-900/20 border-primary-500/30 border flex flex-wrap items-center justify-between gap-3 shadow-lg shadow-primary-950/20">
-          <div className="flex items-center gap-3">
-            <div className="relative flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-green-600 dark:text-green-400">Active Routine Slot</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">({activeSlot.timeSlot})</span>
+      {activeSlot && (() => {
+        const totalDuration = activeSlot.startMinutes && activeSlot.endMinutes ? Math.max(1, activeSlot.endMinutes - activeSlot.startMinutes) : 0;
+        const elapsedMinutes = totalDuration ? Math.max(0, totalDuration - (activeSlot.minutesRemaining || 0)) : 0;
+        const progressPct = totalDuration ? Math.min(100, Math.max(0, Math.round((elapsedMinutes / totalDuration) * 100))) : 0;
+
+        return (
+          <div className="relative overflow-hidden rounded-2xl p-5 bg-gradient-to-r from-blue-600/10 via-indigo-600/15 to-purple-600/10 dark:from-blue-900/30 dark:via-indigo-900/35 dark:to-purple-900/30 border border-primary-500/30 dark:border-primary-500/40 shadow-xl shadow-primary-950/10 backdrop-blur-sm">
+            {/* Top accent glowing bar */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-primary-500 to-indigo-500" />
+
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-start sm:items-center gap-3.5">
+                <div className="relative flex h-3.5 w-3.5 flex-shrink-0 mt-1 sm:mt-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500" />
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                      Active Routine Slot
+                    </span>
+                    <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                      ({activeSlot.timeSlot})
+                    </span>
+                  </div>
+                  <p className="text-lg font-bold text-gray-900 dark:text-white mt-1">
+                    {activeSlot.activity}
+                  </p>
+
+                  {/* Micro Progress Bar */}
+                  {totalDuration > 0 && (
+                    <div className="mt-2.5 flex items-center gap-3 max-w-sm">
+                      <div className="flex-1 h-1.5 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-primary-500 transition-all duration-500"
+                          style={{ width: `${progressPct}%` }}
+                        />
+                      </div>
+                      <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                        {progressPct}% ({elapsedMinutes}m / {totalDuration}m)
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
-              <p className="text-base font-bold text-gray-900 dark:text-white mt-0.5">
-                {activeSlot.activity}
-              </p>
+
+              <div className="flex items-center gap-2.5 self-start md:self-center">
+                {activeSlot.minutesRemaining > 0 ? (
+                  <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-primary-500/15 text-primary-700 dark:text-primary-300 border border-primary-500/30 whitespace-nowrap shadow-sm">
+                    ⏱ {activeSlot.minutesRemaining}m remaining
+                  </span>
+                ) : (
+                  <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 whitespace-nowrap shadow-sm">
+                    ⏱ Ending soon
+                  </span>
+                )}
+                <Link to="/tasks" className="btn-primary text-xs py-2 px-3.5 rounded-xl flex items-center gap-1.5 shadow-sm">
+                  <span>Tasks</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+                <Link to="/schedule" className="btn-secondary text-xs py-2 px-3.5 rounded-xl flex items-center gap-1.5">
+                  <span>Schedule</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            {activeSlot.minutesRemaining > 0 && (
-              <span className="text-xs font-medium px-3 py-1 rounded-full bg-primary-500/10 text-primary-600 dark:text-primary-300 border border-primary-500/20">
-                ⏱ {activeSlot.minutesRemaining}m remaining
-              </span>
-            )}
-            <Link to="/tasks" className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1">
-              Check Tasks <ChevronRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Stats row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
