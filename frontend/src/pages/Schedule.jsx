@@ -24,14 +24,16 @@ export default function Schedule() {
       .catch(console.error)
       .finally(() => setLoading(false));
 
-    const timer = setInterval(() => setCurrentTime(new Date()), 15000);
+    const timer = setInterval(() => setCurrentTime(new Date()), 10000);
     const handleVis = () => {
       if (document.visibilityState === 'visible') setCurrentTime(new Date());
     };
     document.addEventListener('visibilitychange', handleVis);
+    window.addEventListener('focus', handleVis);
     return () => {
       clearInterval(timer);
       document.removeEventListener('visibilitychange', handleVis);
+      window.removeEventListener('focus', handleVis);
     };
   }, []);
 

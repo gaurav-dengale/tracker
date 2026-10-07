@@ -71,13 +71,33 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(() => {
-      if (schedule && schedule.length > 0) {
-        setActiveSlot(getActiveScheduleItem(schedule));
-      }
-    }, 60000);
-    return () => clearInterval(interval);
   }, [today]);
+
+  useEffect(() => {
+    if (!schedule || schedule.length === 0) return;
+
+    const updateActiveSlot = () => {
+      setActiveSlot(getActiveScheduleItem(schedule));
+    };
+
+    updateActiveSlot();
+
+    const interval = setInterval(updateActiveSlot, 10000);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        updateActiveSlot();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleVisibility);
+    };
+  }, [schedule]);
 
   const handleToggleTask = async (task, e) => {
     const isNowCompleting = !task.completed;
