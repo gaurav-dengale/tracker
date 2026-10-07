@@ -27,6 +27,8 @@ import Scratchpad from './Scratchpad';
 import AiStudyTutor from './AiStudyTutor';
 import PwaInstallPrompt from './PwaInstallPrompt';
 import OfflineIndicator from './OfflineIndicator';
+import NotificationCenter from './NotificationCenter';
+import NotificationToast from './NotificationToast';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -211,6 +213,9 @@ export default function Layout({ children, darkMode, setDarkMode }) {
             <BookMarked className="w-4 h-4" />
           </button>
 
+          {/* Notification Center */}
+          <NotificationCenter />
+
           {/* Dark / Light Toggle */}
           <button
             onClick={() => setDarkMode(!darkMode)}
@@ -232,6 +237,7 @@ export default function Layout({ children, darkMode, setDarkMode }) {
       <PomodoroTimer isOpen={pomodoroOpen} onClose={() => setPomodoroOpen(false)} />
       <Scratchpad isOpen={scratchpadOpen} onClose={() => setScratchpadOpen(false)} />
       <OfflineIndicator />
+      <NotificationToast />
     </div>
   );
 }

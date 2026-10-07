@@ -100,3 +100,33 @@ export function playTaskCheckSound() {
     console.debug('Audio play failed', e);
   }
 }
+
+// Gentle pleasant chime for general in-app notifications & routine alerts
+export function playNotificationChime() {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    const notes = [587.33, 880]; // D5, A5
+    notes.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.1);
+
+      gain.gain.setValueAtTime(0, ctx.currentTime + idx * 0.1);
+      gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + idx * 0.1 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.1 + 0.5);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(ctx.currentTime + idx * 0.1);
+      osc.stop(ctx.currentTime + idx * 0.1 + 0.55);
+    });
+  } catch (e) {
+    console.debug('Audio play failed', e);
+  }
+}
+

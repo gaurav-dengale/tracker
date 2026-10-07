@@ -68,3 +68,26 @@ export function getActiveScheduleItem(items, now = new Date()) {
   }
   return null;
 }
+
+// Finds the next upcoming slot today
+export function getNextUpcomingSlot(items, now = new Date()) {
+  if (!items || !items.length) return null;
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  let closestItem = null;
+  let minDiff = Infinity;
+
+  for (const item of items) {
+    const range = parseSlotRange(item.timeSlot);
+    if (!range) continue;
+    if (range.startMinutes > currentMinutes) {
+      const diff = range.startMinutes - currentMinutes;
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestItem = { ...item, minutesUntilStart: diff, startMinutes: range.startMinutes };
+      }
+    }
+  }
+  return closestItem;
+}
+

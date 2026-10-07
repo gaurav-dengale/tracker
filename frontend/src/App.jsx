@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { NotificationProvider } from './context/NotificationContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -64,7 +65,9 @@ export default function App() {
 
   return (
     <AuthProvider>
-      <AppContent darkMode={darkMode} setDarkMode={setDarkMode} />
+      <NotificationProvider>
+        <AppContent darkMode={darkMode} setDarkMode={setDarkMode} />
+      </NotificationProvider>
     </AuthProvider>
   );
 }

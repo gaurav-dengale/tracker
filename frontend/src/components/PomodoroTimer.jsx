@@ -91,16 +91,19 @@ export default function PomodoroTimer({ isOpen, onClose }) {
         playChime();
         addXp(selectedMode.minutes >= 50 ? 40 : 20); // Award Focus XP
 
-        try {
-          if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification('Focus Session Complete! 🎉', {
-              body: `${selectedMode.label} completed! Take a breather or continue your preparation.`,
-              icon: '/icon-192.png',
-            });
-          }
-        } catch (e) {
-          console.debug(e);
-        }
+        // Dispatch global app-notify event for Notification Center & Toasts
+        window.dispatchEvent(
+          new CustomEvent('app-notify', {
+            detail: {
+              title: '🍅 Focus Session Complete! 🎉',
+              message: `${selectedMode.label} completed! You earned +${selectedMode.minutes >= 50 ? 40 : 20} XP. Take a short break or continue.`,
+              type: 'pomodoro',
+              actionUrl: '/schedule',
+              actionLabel: 'Check Routine',
+              tag: 'pomodoro-complete',
+            },
+          })
+        );
 
         try {
           localStorage.setItem(
